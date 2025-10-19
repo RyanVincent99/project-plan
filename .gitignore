@@ -1,0 +1,31 @@
+# === Global ===
+*.log
+*.tmp
+.DS_Store
+.env
+.env.local
+node_modules/
+dist/
+build/
+target/
+.idea/
+.vscode/
+*.iml
+
+# === Frontend (Next.js) ===
+frontend/.next/
+frontend/out/
+frontend/node_modules/
+frontend/.env.local
+
+# === Backend (Spring Boot) ===
+backend/target/
+backend/.mvn/
+backend/mvnw.cmd
+backend/mvnw
+
+# === Docker ===
+*.pid
+*.bak
+*.tar
+*.db

@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  backend:
+    build: ./backend
+    container_name: projectplan-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/projectplan
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev # use the development image
+    container_name: projectplan-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app          # Mount local files for live editing
+      - /app/node_modules        # Prevent overwriting node_modules
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+    restart: always
+
+  db:
+    image: postgres:15
+    container_name: projectplan-db
+    environment:
+      POSTGRES_DB: projectplan
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: always
+
+volumes:
+  pgdata:
