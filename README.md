@@ -1,150 +1,91 @@
-# 🗓️ Project Plan
+# 🚀 Project Plan - Content Scheduler
 
-A full-stack repo for building a **content planner**, featuring a **Next.js frontend**, **Spring Boot backend**, and **PostgreSQL** database — all running seamlessly with **Docker Compose**.
-
----
-
-## 🚀 Tech Stack
-
-| Layer | Technology | Description |
-|--------|-------------|--------------|
-| **Frontend** | [Next.js 14](https://nextjs.org/) + [TypeScript](https://www.typescriptlang.org/) | Modern React framework with hot reload, TailwindCSS, and API integration |
-| **Backend** | [Spring Boot 3](https://spring.io/projects/spring-boot) | REST API with CORS enabled, using JPA for database interaction |
-| **Database** | [PostgreSQL](https://www.postgresql.org/) | Stores posts and related content |
-| **Containerization** | [Docker Compose](https://docs.docker.com/compose/) | One command to build and run everything |
+A full-stack web application designed for social media content scheduling and collaboration, inspired by tools like Planable.io. This project features a Next.js frontend, a Spring Boot backend, and a PostgreSQL database, all containerized with Docker.
 
 ---
 
-## ⚙️ Features
+## ✨ Features
 
-- 🧩 Modular setup (frontend, backend, database)
-- 🔁 Hot reload for frontend and backend during development
-- 📡 REST API for posts (`/api/posts`)
-- 🧠 Simple “Add New Post” form in the web UI
-- 💾 Persistent PostgreSQL volume storage
+* **User Authentication:** Secure sign-in and session management using Next-Auth.
+* **Content Feed:** A central dashboard to view and manage content posts.
+* **Approval Workflow:** A status system for posts (e.g., Draft, Approved, Rejected).
+* **Decoupled Architecture:** A modern, scalable setup with a React-based frontend and a Java-based backend API.
+* **Containerized Environment:** Easily run the entire stack with a single Docker Compose command.
 
 ---
 
-## 🧱 Project Structure
+## 🛠️ Tech Stack
+
+* **Frontend:** [Next.js](https://nextjs.org/) (React) & [Tailwind CSS](https://tailwindcss.com/)
+* **Backend:** [Spring Boot](https://spring.io/projects/spring-boot) (Java) & [Spring Data JPA](https://spring.io/projects/spring-data-jpa)
+* **Database:** [PostgreSQL](https://www.postgresql.org/)
+* **Authentication:** [Next-Auth](https://next-auth.js.org/)
+* **Containerization:** [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
+* **ORM:** [Prisma](https://www.prisma.io/) (for Next-Auth) & [Hibernate](https://hibernate.org/) (for Spring Boot)
+
+---
+
+## 🏁 Getting Started
+
+Follow these instructions to get the project up and running on your local machine.
+
+### Prerequisites
+
+* [Docker](https://www.docker.com/products/docker-desktop/) installed and running.
+* [Node.js](https://nodejs.org/en/) v18 or newer (for local development, if needed).
+
+### Installation & Setup
+
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/RyanVincent99/project-plan.git](https://github.com/RyanVincent99/project-plan.git)
+    cd project-plan
+    ```
+
+2.  **Create the environment file:**
+    Create a new file named `.env` in the root of the project and paste the following content. You will need to fill in the credentials.
+
+    ```.env
+    # Database Credentials
+    POSTGRES_USER=your_db_user
+    POSTGRES_PASSWORD=your_db_password
+    POSTGRES_DB=project_plan
+    DATABASE_URL="postgresql://your_db_user:your_db_password@db:5432/project_plan"
+
+    # NextAuth Secret (generate a random string)
+    # You can generate one here: [https://generate-secret.vercel.app/32](https://generate-secret.vercel.app/32)
+    NEXTAUTH_SECRET="your_secret_key_here"
+
+    # Google Provider for NextAuth
+    # Get these from your Google Cloud Console
+    GOOGLE_CLIENT_ID="your-google-client-id-goes-here"
+    GOOGLE_CLIENT_SECRET="your-google-client-secret-goes-here"
+    ```
+
+3.  **Build and Run the Application:**
+    Run the following command in your terminal. This will build the Docker images for the frontend and backend, and start all three containers.
+
+    ```bash
+    docker-compose up --build
+    ```
+
+4.  **Open the Application:**
+    Once the build is complete and the containers are running, open your web browser and go to:
+    **`http://localhost:3000`**
+
+---
+
+## 📂 Project Structure
 
 ```
-projectplan-clone/
-├── backend/                 # Spring Boot API server
-│   ├── src/main/java/com/example/projectplanclone/
-│   │   ├── controller/      # REST controllers
-│   │   ├── model/           # JPA entities
-│   │   ├── repository/      # Spring Data Repos
-│   │   └── config/          # Config classes (e.g. CORS)
-│   └── src/main/resources/
-│       └── application.yml
-│
-├── frontend/                # Next.js client app
-│   ├── src/app/             # Main pages and components
-│   └── public/
-│
-├── docker-compose.yml       # Container orchestration
-└── README.md
+project-plan/
+├── backend/            # Spring Boot Backend Service
+├── components/         # React Components for the Frontend
+├── lib/                # Shared utility files (Prisma Client)
+├── pages/              # Next.js pages and API routes
+├── prisma/             # Prisma schema and migrations for auth
+├── styles/             # Global CSS and Tailwind styles
+├── docker-compose.yml  # Docker Compose configuration
+├── Dockerfile          # Dockerfile for the Next.js Frontend
+└── ...
 ```
-
----
-
-## 🧰 Prerequisites
-
-Before running locally, ensure you have:
-
-- 🐋 [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- 🧑‍💻 [Git](https://git-scm.com/)
-- (Optional) [Node.js 20+](https://nodejs.org/) and [Java 21+](https://adoptium.net/) for manual builds
-
----
-
-## ▶️ How to Run
-
-### 🔹 Option 1: Run with Docker (recommended)
-
-```bash
-docker-compose up --build
-```
-
-Then open:
-
-- **Frontend:** http://localhost:3000  
-- **Backend:** http://localhost:8080  
-- **Database:** localhost:5432 (`user=postgres`, `password=postgres`)
-
----
-
-### 🔹 Option 2: Run manually (without Docker)
-
-1. **Backend:**
-
-```bash
-cd backend
-./mvnw spring-boot:run
-```
-
-2. **Frontend:**
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
----
-
-## 🧪 API Endpoints
-
-| Method | Endpoint | Description |
-|---------|-----------|-------------|
-| `GET` | `/api/posts` | Get all posts |
-| `POST` | `/api/posts` | Create a new post |
-
-Example request:
-
-```bash
-curl -X POST http://localhost:8080/api/posts      -H "Content-Type: application/json"      -d '{"platform": "twitter", "content": "Hello world!", "status": "draft"}'
-```
-
----
-
-## 🧩 Environment Variables
-
-| Service | File | Key | Example |
-|----------|------|-----|----------|
-| **Frontend** | `.env.local` | `NEXT_PUBLIC_API_URL` | `http://localhost:8080/api` |
-| **Backend** | `application.yml` | `spring.datasource.url` | `jdbc:postgresql://db:5432/projectplan` |
-
----
-
-## 💾 Persistent Data
-
-PostgreSQL data is stored in a Docker volume:  
-```
-projectplan_pgdata
-```
-
-To view your database content:
-```bash
-docker exec -it projectplan-db psql -U postgres -d projectplan
-```
-
----
-
-## 🧑‍💻 Development Notes
-
-- Backend code changes trigger auto-rebuild (Spring DevTools or volume mapping)
-- Frontend changes hot-reload automatically in the browser
-- CORS is configured in `WebConfig.java` to allow frontend access
-
----
-
-## 🧹 Common Issues
-
-| Problem | Cause | Solution |
-|----------|--------|-----------|
-| `Failed to fetch` | CORS issue | Check `WebConfig.java` for allowed origins |
-| `ERR_NAME_NOT_RESOLVED` | Using wrong API URL | Ensure `NEXT_PUBLIC_API_URL` matches backend container name or localhost |
-| DB not persisting | Missing volume | Check Docker volume `projectplan_pgdata` |
-
----

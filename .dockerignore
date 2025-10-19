@@ -1,0 +1,17 @@
+# Docker and node
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+
+# Next.js build output
+.next
+*.tsbuildinfo
+
+# Local environment
+.env
+.env.local
+
+# Git
+.git
+.gitignore

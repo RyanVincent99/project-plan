@@ -1,31 +1,28 @@
-# === Global ===
-*.log
-*.tmp
+# Operating System Files
 .DS_Store
+Thumbs.db
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local Environment Variables
 .env
 .env.local
+
+# Node.js / Next.js
 node_modules/
-dist/
-build/
-target/
+.next/
+*.tsbuildinfo
+
+# Java / Maven
+/backend/target/
+/backend/*.jar
+/backend/*.class
+
+# IDE and Editor Directories
 .idea/
 .vscode/
-*.iml
-
-# === Frontend (Next.js) ===
-frontend/.next/
-frontend/out/
-frontend/node_modules/
-frontend/.env.local
-
-# === Backend (Spring Boot) ===
-backend/target/
-backend/.mvn/
-backend/mvnw.cmd
-backend/mvnw
-
-# === Docker ===
-*.pid
-*.bak
-*.tar
-*.db
+*.swp
