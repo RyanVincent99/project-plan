@@ -1,18 +1,18 @@
-version: '3.8'
-
 services:
   # Service 1: Next.js Frontend
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8080/api
     ports:
       - "3000:3000"
     env_file:
       - .env
     environment:
       # This new variable tells Next.js where to find the backend
-      NEXT_PUBLIC_API_URL: "http://backend:8080/api"
+      NEXT_PUBLIC_API_URL: "http://localhost:8080/api"
     depends_on:
       - backend
       - db

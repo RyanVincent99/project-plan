@@ -2,7 +2,7 @@
 import NextAuth from 'next-auth'
 import { PrismaAdapter } from '@next-auth/prisma-adapter'
 import GoogleProvider from 'next-auth/providers/google'
-import prisma from '@/lib/prisma' // We will create this file next
+import prisma from '@/lib/prisma'
 
 export default NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -11,13 +11,27 @@ export default NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-    // You can add other providers here (e.g., GitHub, Email)
   ],
   secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: 'jwt',
   },
+  // --- ADD THIS CALLBACKS SECTION ---
   callbacks: {
-    // You can add callbacks here to control session data
+    async session({ session, token }) {
+      // Add the user ID (which is stored in 'sub' on the token)
+      // to the session.user object
+      if (token && session.user) {
+        session.user.id = token.sub as string;
+      }
+      return session;
+    },
+    async jwt({ token, user }) {
+      // On sign-in, add the user's ID to the token
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
+    },
   },
 })
