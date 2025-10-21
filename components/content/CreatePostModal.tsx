@@ -3,6 +3,7 @@ import { Dialog, Transition } from '@headlessui/react'
 import { Fragment, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { XMarkIcon } from '@heroicons/react/24/solid'
+import ChannelSelector from './ChannelSelector' // Import the new component
 
 interface Props {
   isOpen: boolean
@@ -15,12 +16,21 @@ export default function CreatePostModal({ isOpen, setIsOpen, onPostCreated }: Pr
   const [content, setContent] = useState('')
   const [scheduledAt, setScheduledAt] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [targetAccountIds, setTargetAccountIds] = useState<string[]>([]) // NEW
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!content || !session?.user) return
-    setIsLoading(true)
+    
+    if (!content || !session?.user) {
+      alert("Please write some content.")
+      return
+    }
+    if (targetAccountIds.length === 0) {
+      alert("Please select at least one channel to post to.")
+      return
+    }
 
+    setIsLoading(true)
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
     
     try {
@@ -29,8 +39,9 @@ export default function CreatePostModal({ isOpen, setIsOpen, onPostCreated }: Pr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: content,
-          authorId: session.user.id, // Assuming user.id is the authorId
+          authorId: session.user.id,
           scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+          targetAccountIds: targetAccountIds, // Pass the selected IDs
         }),
       })
 
@@ -51,6 +62,7 @@ export default function CreatePostModal({ isOpen, setIsOpen, onPostCreated }: Pr
     setIsOpen(false)
     setContent('')
     setScheduledAt('')
+    setTargetAccountIds([]) // Reset selected accounts
   }
 
   return (
@@ -89,6 +101,16 @@ export default function CreatePostModal({ isOpen, setIsOpen, onPostCreated }: Pr
                     <XMarkIcon className="w-6 h-6" />
                   </button>
                 </Dialog.Title>
+
+                {/* --- ADD THE CHANNEL SELECTOR --- */}
+                <div className="mt-4">
+                  <ChannelSelector 
+                    selectedAccountIds={targetAccountIds}
+                    onChange={setTargetAccountIds}
+                  />
+                </div>
+                {/* ---------------------------------- */}
+                
                 <form onSubmit={handleSubmit} className="mt-4">
                   <div className="flex items-start space-x-3">
                     <img

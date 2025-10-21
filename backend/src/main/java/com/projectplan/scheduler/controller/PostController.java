@@ -6,14 +6,17 @@ import com.projectplan.scheduler.dto.UpdateStatusRequest;
 import com.projectplan.scheduler.model.Comment;
 import com.projectplan.scheduler.model.Post;
 import com.projectplan.scheduler.model.PostStatus;
+import com.projectplan.scheduler.model.SocialAccount;
 import com.projectplan.scheduler.repository.CommentRepository;
 import com.projectplan.scheduler.repository.PostRepository;
+import com.projectplan.scheduler.repository.SocialAccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.List; // Required for List
+import java.util.Set;   // Required for Set
 
 @RestController
 @RequestMapping("/api/posts")
@@ -23,24 +26,32 @@ public class PostController {
     private PostRepository postRepository;
 
     @Autowired
-    private CommentRepository commentRepository; // Inject comment repository
+    private CommentRepository commentRepository;
+    
+    @Autowired
+    private SocialAccountRepository socialAccountRepository; // Inject new repo
 
     @GetMapping
     public ResponseEntity<List<Post>> getAllPosts() {
-        // Sort by creation date, newest first
         List<Post> posts = postRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
         return ResponseEntity.ok(posts);
     }
 
-    // NEW ENDPOINT: Create Post
+    // UPDATED createPost method
     @PostMapping
     public ResponseEntity<Post> createPost(@RequestBody CreatePostRequest request) {
         Post post = new Post();
         post.setContent(request.getContent());
         post.setAuthorId(request.getAuthorId());
         post.setScheduledAt(request.getScheduledAt());
-        post.setStatus(PostStatus.DRAFT); // Default status
+        post.setStatus(PostStatus.DRAFT);
         
+        // Add logic to find and set target accounts
+        if (request.getTargetAccountIds() != null && !request.getTargetAccountIds().isEmpty()) {
+            List<SocialAccount> accounts = socialAccountRepository.findAllById(request.getTargetAccountIds());
+            post.setTargets(Set.copyOf(accounts));
+        }
+
         Post savedPost = postRepository.save(post);
         return ResponseEntity.status(201).body(savedPost);
     }
@@ -58,7 +69,6 @@ public class PostController {
         return ResponseEntity.ok(updatedPost);
     }
 
-    // NEW ENDPOINT: Create Comment
     @PostMapping("/{postId}/comments")
     public ResponseEntity<Comment> createComment(
             @PathVariable String postId,

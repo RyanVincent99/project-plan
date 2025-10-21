@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { FiMessageCircle, FiSend } from 'react-icons/fi'
+import { FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus } from 'react-icons/fa' // Import icons
 
 // New Comment interface
 export interface Comment {
@@ -9,7 +10,15 @@ export interface Comment {
   text: string
   authorId: string
   createdAt: string
-  // You can add author name/image if you fetch user data by authorId
+}
+
+// Map provider keys to icons and colors
+const channelMap = {
+  linkedin: { icon: FaLinkedin, color: 'text-blue-700' },
+  facebook: { icon: FaFacebook, color: 'text-blue-800' },
+  twitter: { icon: FaTwitter, color: 'text-blue-400' },
+  instagram: { icon: FaInstagram, color: 'text-pink-500' },
+  tiktok: { icon: FaTiktok, color: 'text-black' },
 }
 
 export interface Post {
@@ -18,8 +27,9 @@ export interface Post {
   status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'SCHEDULED' | 'PUBLISHED'
   createdAt: string
   authorId: string
-  scheduledAt?: string // Make scheduledAt optional
-  comments: Comment[] // Add comments array
+  scheduledAt?: string
+  comments: Comment[]
+  targets: { provider: string }[] // UPDATED: Post now has targets
 }
 
 interface PostCardProps {
@@ -52,7 +62,6 @@ export default function PostCard({ post, onCommentPosted }: PostCardProps) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
 
   const handleUpdateStatus = async (newStatus: Post['status']) => {
-    // ... (keep your existing handleUpdateStatus function)
     setCurrentStatus(newStatus); 
     try {
       const response = await fetch(`${apiUrl}/posts/${post.id}/status`, {
@@ -102,14 +111,20 @@ export default function PostCard({ post, onCommentPosted }: PostCardProps) {
           </span>
           {post.scheduledAt && (
             <span className="ml-3 text-sm text-gray-600">
-              | Scheduled for: {new Date(post.scheduledAt).toLocaleString()}
+              | Scheduled: {new Date(post.scheduledAt).toLocaleString()}
             </span>
           )}
         </div>
-        <div className="flex items-center">
-          <span className="text-sm text-gray-600 mr-2">Author ID: {post.authorId}</span>
-          {/* You would fetch user data by authorId to show image/name */}
+        
+        {/* --- Show Channel Icons --- */}
+        <div className="flex items-center space-x-2">
+          {post.targets && post.targets.map((target, index) => {
+            const providerKey = target.provider as keyof typeof channelMap;
+            const { icon: Icon, color } = channelMap[providerKey] || { icon: FaPlus, color: 'text-gray-400' }
+            return <Icon key={`${target.provider}-${index}`} className={`w-5 h-5 ${color}`} />
+          })}
         </div>
+        {/* ------------------------- */}
       </div>
 
       {/* Post Content */}
@@ -126,7 +141,7 @@ export default function PostCard({ post, onCommentPosted }: PostCardProps) {
               className="flex items-center text-gray-600 hover:text-indigo-600"
             >
               <FiMessageCircle className="w-5 h-5 mr-1" />
-              <span>{post.comments.length} Comments</span>
+              <span>{post.comments ? post.comments.length : 0} Comments</span>
             </button>
           </div>
           
@@ -155,11 +170,10 @@ export default function PostCard({ post, onCommentPosted }: PostCardProps) {
         <div className="p-6 border-t border-gray-200">
           {/* List of comments */}
           <div className="flex flex-col space-y-4 max-h-60 overflow-y-auto pr-2">
-            {post.comments.length > 0 ? (
+            {post.comments && post.comments.length > 0 ? (
               post.comments.map((comment) => (
                 <div key={comment.id} className="flex items-start space-x-3">
                   <div className="flex-shrink-0">
-                    {/* Placeholder for commentor avatar */}
                     <div className="w-8 h-8 rounded-full bg-gray-300"></div>
                   </div>
                   <div className="flex-1">
