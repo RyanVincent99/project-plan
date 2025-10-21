@@ -29,9 +29,9 @@ spring:
         # 1. REGISTRATION: Your app's specific credentials
         registration:
           linkedin:
-            provider: linkedin  # <-- This tells Spring to use the "provider" block below
-            client-id: "86aqewa94qod10"
-            client-secret: "WPL_AP1.awG4vQPg98RtJk3k.sHinUA=="
+            provider: linkedin
+            client-id: ${LINKEDIN_CLIENT_ID}
+            client-secret: ${LINKEDIN_CLIENT_SECRET}
             redirect-uri: "http://localhost:8080/api/connect/linkedin/callback"
             authorization-grant-type: authorization_code
             scope: openid,profile,w_member_social
@@ -42,4 +42,4 @@ spring:
             authorization-uri: https://www.linkedin.com/oauth/v2/authorization
             token-uri: https://www.linkedin.com/oauth/v2/accessToken
             user-info-uri: https://api.linkedin.com/v2/userinfo
-            user-name-attribute: sub # 'sub' (subject) is the standard for user ID
+            user-name-attribute: sub
