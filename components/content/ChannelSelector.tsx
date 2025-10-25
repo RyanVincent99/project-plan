@@ -33,26 +33,26 @@ export default function ChannelSelector({ selectedAccountIds, onChange }: Props)
       setIsLoading(true)
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
       try {
-        const res = await fetch(`${apiUrl}/social-accounts`) // You need to create this endpoint
+        // Fetch accounts from the new backend endpoint
+        const res = await fetch(`${apiUrl}/social-accounts`) 
         if (res.ok) {
-          setAccounts(await res.json())
+          const data: SocialAccount[] = await res.json()
+          setAccounts(data)
+        } else {
+          console.error("Failed to fetch social accounts:", res.statusText)
+          setAccounts([]) // Clear accounts on error
         }
       } catch (e) {
-        console.error("Failed to fetch social accounts", e)
+        console.error("Error fetching social accounts:", e)
+        setAccounts([]) // Clear accounts on error
       } finally {
         setIsLoading(false)
       }
     }
-    // fetchAccounts() // Uncomment when your endpoint is ready
     
-    // FOR DEMO: Add a fake account so you can see the UI
-    setAccounts([
-      { id: 'fake-linkedin-id', provider: 'linkedin', name: 'Demo LinkedIn' },
-      { id: 'fake-facebook-id', provider: 'facebook', name: 'Demo Facebook' },
-    ])
-    setIsLoading(false)
+    fetchAccounts(); // Fetch accounts when the component mounts
 
-  }, [])
+  }, []) // Empty dependency array ensures this runs once
 
   const toggleAccount = (id: string) => {
     const newSelection = selectedAccountIds.includes(id)
@@ -61,42 +61,42 @@ export default function ChannelSelector({ selectedAccountIds, onChange }: Props)
     onChange(newSelection)
   }
 
-  if (isLoading) {
-    return <p className="text-sm text-gray-500">Loading channels...</p>
-  }
-
   return (
     <div className="py-2">
       <label className="block text-sm font-medium text-gray-700">Publish to:</label>
-      <div className="mt-2 flex items-center space-x-2">
-        {accounts.map(account => {
-          // --- THIS IS THE FIX ---
-          // We tell TypeScript that account.provider is a key of channelMap
-          const providerKey = account.provider as keyof typeof channelMap;
-          // -----------------------
-          
-          const { icon: Icon, color } = channelMap[providerKey] || { icon: FaPlus, color: 'text-gray-400' }
-          const isSelected = selectedAccountIds.includes(account.id)
-          
-          return (
-            <button
-              key={account.id}
-              type="button"
-              onClick={() => toggleAccount(account.id)}
-              className={`relative p-2 rounded-full transition-all ${
-                isSelected ? 'bg-indigo-100 ring-2 ring-indigo-500' : 'bg-gray-200 hover:bg-gray-300'
-              }`}
-              title={account.name}
-            >
-              <Icon className={`w-5 h-5 ${color}`} />
-              {isSelected && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-indigo-600 rounded-full border-2 border-white"></div>
-              )}
-            </button>
-          )
-        })}
+      <div className="mt-2 flex items-center space-x-2 flex-wrap gap-2"> {/* Added flex-wrap and gap */}
+        {isLoading ? (
+          <p className="text-sm text-gray-500">Loading channels...</p>
+        ) : accounts.length > 0 ? (
+          accounts.map(account => {
+            // Tell TypeScript that account.provider is a key of channelMap
+            const providerKey = account.provider as keyof typeof channelMap;
+            
+            const { icon: Icon, color } = channelMap[providerKey] || { icon: FaPlus, color: 'text-gray-400' } // Default icon
+            const isSelected = selectedAccountIds.includes(account.id)
+            
+            return (
+              <button
+                key={account.id}
+                type="button"
+                onClick={() => toggleAccount(account.id)}
+                className={`relative p-2 rounded-full transition-all ${
+                  isSelected ? 'bg-indigo-100 ring-2 ring-indigo-500' : 'bg-gray-200 hover:bg-gray-300'
+                }`}
+                title={account.name}
+              >
+                <Icon className={`w-5 h-5 ${color}`} />
+                {isSelected && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-indigo-600 rounded-full border-2 border-white"></div>
+                )}
+              </button>
+            )
+          })
+        ) : (
+          <p className="text-sm text-gray-500">No channels connected yet.</p>
+        )}
 
-        {/* --- I'm using the connection links from the Facebook example --- */}
+        {/* Links to connect new channels */}
         <a
           href="http://localhost:8080/api/connect/linkedin"
           className="p-2 rounded-full bg-gray-100 text-blue-700 hover:bg-gray-200"
@@ -104,12 +104,22 @@ export default function ChannelSelector({ selectedAccountIds, onChange }: Props)
         >
           <FaLinkedin className="w-5 h-5" />
         </a>
+        {/* Uncomment or add more connection links as you implement them
         <a
           href="http://localhost:8080/api/connect/facebook"
           className="p-2 rounded-full bg-gray-100 text-blue-800 hover:bg-gray-200"
           title="Connect new Facebook page"
         >
           <FaFacebook className="w-5 h-5" />
+        </a>
+        */}
+        <a
+          href="#" // Or link to a help page?
+          onClick={(e) => e.preventDefault()} // Prevent navigation for now
+          className="p-2 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+          title="Connect another channel"
+        >
+           <FaPlus className="w-5 h-5" />
         </a>
       </div>
     </div>

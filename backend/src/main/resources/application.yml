@@ -32,7 +32,7 @@ spring:
             provider: linkedin
             client-id: ${LINKEDIN_CLIENT_ID}
             client-secret: ${LINKEDIN_CLIENT_SECRET}
-            redirect-uri: "http://localhost:8080/api/connect/linkedin/callback"
+            redirect-uri: "http://localhost:8080/login/oauth2/code/linkedin"
             authorization-grant-type: authorization_code
             scope: openid,profile,w_member_social
 
@@ -43,3 +43,12 @@ spring:
             token-uri: https://www.linkedin.com/oauth/v2/accessToken
             user-info-uri: https://api.linkedin.com/v2/userinfo
             user-name-attribute: sub
+            
+# Logging (keep this for debugging)
+logging:
+  level:
+    root: INFO
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: TRACE
+    org.springframework.web.client.RestTemplate: TRACE
+    org.apache.hc.client5.http.wire: TRACE
