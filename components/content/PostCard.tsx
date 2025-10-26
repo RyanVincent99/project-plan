@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { FiMessageCircle, FiSend } from 'react-icons/fi'
-import { FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus } from 'react-icons/fa' // Import icons
+import { FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus, FaDiscord } from 'react-icons/fa' // Import icons
 
 // New Comment interface
 export interface Comment {
@@ -19,6 +19,7 @@ const channelMap = {
   twitter: { icon: FaTwitter, color: 'text-blue-400' },
   instagram: { icon: FaInstagram, color: 'text-pink-500' },
   tiktok: { icon: FaTiktok, color: 'text-black' },
+  discord: { icon: FaDiscord, color: 'text-indigo-500' }, // Add Discord
 }
 
 export interface Post {
@@ -29,12 +30,12 @@ export interface Post {
   authorId: string
   scheduledAt?: string
   comments: Comment[]
-  targets: { provider: string }[] // UPDATED: Post now has targets
+  targets: { provider: string }[] // UPDATED: Post now has a targets
 }
 
 interface PostCardProps {
   post: Post
-  onCommentPosted: () => void // Callback to refresh posts
+  onPostUpdate: () => void // Callback to refresh posts
 }
 
 const getStatusStyles = (status: Post['status']) => {
@@ -52,12 +53,13 @@ const getStatusStyles = (status: Post['status']) => {
   }
 };
 
-export default function PostCard({ post, onCommentPosted }: PostCardProps) {
+export default function PostCard({ post, onPostUpdate }: PostCardProps) {
   const { data: session } = useSession()
   const [currentStatus, setCurrentStatus] = useState(post.status)
   const [showComments, setShowComments] = useState(false)
   const [newComment, setNewComment] = useState('')
   const [isCommenting, setIsCommenting] = useState(false)
+  const [isPublishing, setIsPublishing] = useState(false) // For publish button
   const statusStyles = getStatusStyles(currentStatus)
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
 
@@ -91,7 +93,7 @@ export default function PostCard({ post, onCommentPosted }: PostCardProps) {
       })
       if (res.ok) {
         setNewComment('')
-        onCommentPosted() // Refresh the whole post list to get new comment
+        onPostUpdate() // Refresh the whole post list to get new comment
       }
     } catch (error) {
       console.error('Failed to post comment:', error)
@@ -99,6 +101,25 @@ export default function PostCard({ post, onCommentPosted }: PostCardProps) {
       setIsCommenting(false)
     }
   }
+
+  const handlePublish = async () => {
+    setIsPublishing(true);
+    try {
+      const response = await fetch(`${apiUrl}/posts/${post.id}/publish`, {
+        method: 'POST',
+      });
+      if (response.ok) {
+        onPostUpdate(); // Refresh the post list to show the new 'PUBLISHED' status
+      } else {
+        alert('Failed to publish post.');
+      }
+    } catch (error) {
+      console.error('Error publishing post:', error);
+      alert('An error occurred while publishing the post.');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
 
   return (
     <div className="bg-white shadow-lg rounded-2xl overflow-hidden max-w-2xl mx-auto my-4">
@@ -147,6 +168,16 @@ export default function PostCard({ post, onCommentPosted }: PostCardProps) {
           
           {/* Approval Buttons */}
           <div className="flex items-center space-x-2">
+            {(currentStatus === 'APPROVED' || currentStatus === 'SCHEDULED') && (
+              <button
+                onClick={handlePublish}
+                className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                disabled={isPublishing || post.targets.length === 0}
+                title={post.targets.length === 0 ? "Add a channel to publish" : "Publish to channels"}
+              >
+                {isPublishing ? 'Publishing...' : 'Publish Now'}
+              </button>
+            )}
             <button 
               onClick={() => handleUpdateStatus('REJECTED')}
               className="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 disabled:opacity-50"

@@ -1,27 +1,41 @@
 # =========================
-# 🏗️  BUILD STAGE
+# 📦 BUILD STAGE
 # =========================
+# Use a specific Maven and Java version for reproducible builds
 FROM maven:3.9.6-eclipse-temurin-21 AS build
+
+# Set the working directory
 WORKDIR /app
 
-# Copy pom and source
+# 1. Copy only the pom.xml to leverage Docker's layer caching.
+# This layer is only rebuilt when pom.xml changes.
 COPY pom.xml .
+
+# 2. Download all dependencies into the local Maven repository.
+# The 'go-offline' goal is designed for this purpose.
+RUN mvn dependency:go-offline
+
+# 3. Copy the source code into the container.
+# This layer is rebuilt when your source code changes.
 COPY src ./src
 
-# Build the application
+# 4. Build the application using the pre-downloaded dependencies.
 RUN mvn -DskipTests clean package
 
 
 # =========================
 # 🚀 RUNTIME STAGE
 # =========================
-FROM eclipse-temurin:21-jre
+# Use a lightweight Java runtime
+FROM eclipse-temurin:21-jre-jammy
+
+# Set the working directory
 WORKDIR /app
 
-# Copy the built JAR from the previous stage
+# Copy the JAR file from the build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose port (same as Spring Boot default)
+# Expose the port the application runs on
 EXPOSE 8080
 
 # Run the application

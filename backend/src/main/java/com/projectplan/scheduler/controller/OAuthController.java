@@ -17,8 +17,9 @@ import java.time.LocalDateTime;
 @RequestMapping("/api")
 public class OAuthController {
 
-    @Autowired
-    private SocialAccountRepository socialAccountRepository;
+    // This is no longer needed here as the logic is in the success handler.
+    // @Autowired
+    // private SocialAccountRepository socialAccountRepository;
 
     // This endpoint is what your "Connect" button will link to
     @GetMapping("/connect/linkedin")
@@ -27,40 +28,12 @@ public class OAuthController {
         return new RedirectView("/oauth2/authorization/linkedin");
     }
 
-    // This is the callback URI you configured in your application.yml
-    // It will be hit *after* the user authorizes on LinkedIn
-    @GetMapping("/connect/linkedin/callback")
-    public RedirectView linkedInCallback(
-            @RegisteredOAuth2AuthorizedClient("linkedin") OAuth2AuthorizedClient authorizedClient,
-            OAuth2AuthenticationToken authentication) {
-
-        // 1. Get token details
-        String provider = authorizedClient.getClientRegistration().getRegistrationId();
-        String providerAccountId = authentication.getPrincipal().getName();
-        String accessToken = authorizedClient.getAccessToken().getTokenValue();
-        String refreshToken = (authorizedClient.getRefreshToken() != null) ?
-                                authorizedClient.getRefreshToken().getTokenValue() : null;
-        LocalDateTime expiresAt = (authorizedClient.getAccessToken().getExpiresAt() != null) ?
-                                  LocalDateTime.from(authorizedClient.getAccessToken().getExpiresAt()) : null;
-        
-        // 2. Get user's name
-        String name = authentication.getPrincipal().getAttribute("localizedFirstName") + " " +
-                      authentication.getPrincipal().getAttribute("localizedLastName");
-
-        // 3. Save to database
-        SocialAccount account = socialAccountRepository.findByProviderAndProviderAccountId(provider, providerAccountId)
-                .orElse(new SocialAccount());
-        
-        account.setProvider(provider);
-        account.setProviderAccountId(providerAccountId);
-        account.setName(name);
-        account.setAccessToken(accessToken);
-        account.setRefreshToken(refreshToken);
-        account.setExpiresAt(expiresAt);
-        
-        socialAccountRepository.save(account);
-
-        // 4. Redirect user back to the frontend settings page
-        return new RedirectView("http://localhost:3000/dashboard"); // Or a settings page
+    @GetMapping("/connect/discord")
+    public RedirectView connectDiscord() {
+        return new RedirectView("/oauth2/authorization/discord");
     }
+
+    // The custom callback is no longer needed and should be removed.
+    // Spring Security handles the /login/oauth2/code/* callback internally
+    // and then passes control to our CustomAuthenticationSuccessHandler.
 }

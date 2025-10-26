@@ -17,7 +17,7 @@ export default function FeedView({ posts, isLoading, onRefresh }: Props) {
           <PostCard 
             key={post.id} 
             post={post} 
-            onCommentPosted={onRefresh} 
+            onPostUpdate={onRefresh} 
           />
         ))
       ) : (

@@ -5,14 +5,17 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.5</version> 
-        <relativePath/> </parent>
-    <groupId>com.projectplan</groupId> <artifactId>scheduler</artifactId>
+        <version>3.2.5</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>com.projectplan</groupId>
+    <artifactId>scheduler</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>project-plan-scheduler</name> <description>Scheduler backend service for Project Plan</description>
+    <name>project-plan-scheduler</name>
+    <description>Scheduler backend service for Project Plan</description>
     
     <properties>
-        <java.version>17</java.version>
+        <java.version>21</java.version>
     </properties>
     
     <dependencies>
@@ -20,50 +23,71 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
-        
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-client</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
-        
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+            <version>1.18.30</version>
+            <scope>provided</scope>
         </dependency>
-        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-oauth2-client</artifactId>
-        </dependency>
     </dependencies>
     
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
-        </plugins>
+             <!-- Ensure javac/processor compatibility and register Lombok as an annotation processor -->
+             <plugin>
+                 <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-compiler-plugin</artifactId>
+                 <version>3.11.0</version>
+                 <configuration>
+                     <!-- Match the project's Java version -->
+                     <release>21</release>
+                     <!-- Fork the compiler to avoid classpath/tooling conflicts -->
+                     <fork>true</fork>
+                     <!-- Prevent javac from trying to read IDE-specific symbol files -->
+                     <compilerArgs>
+                         <arg>-XDignore.symbol.file</arg>
+                     </compilerArgs>
+                     <!-- Register Lombok as the annotation processor used at compile time -->
+                     <annotationProcessorPaths>
+                         <path>
+                             <groupId>org.projectlombok</groupId>
+                             <artifactId>lombok</artifactId>
+                             <version>1.18.30</version>
+                         </path>
+                     </annotationProcessorPaths>
+                 </configuration>
+             </plugin>
+             <plugin>
+                 <groupId>org.springframework.boot</groupId>
+                 <artifactId>spring-boot-maven-plugin</artifactId>
+             </plugin>
+         </plugins>
     </build>
 </project>

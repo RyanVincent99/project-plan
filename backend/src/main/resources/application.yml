@@ -32,14 +32,39 @@ spring:
             provider: linkedin
             client-id: ${LINKEDIN_CLIENT_ID}
             client-secret: ${LINKEDIN_CLIENT_SECRET}
-            redirect-uri: "http://localhost:8080/api/connect/linkedin/callback"
+            client-authentication-method: client_secret_post
+            redirect-uri: "http://localhost:8080/login/oauth2/code/linkedin"
             authorization-grant-type: authorization_code
             scope: openid,profile,w_member_social
+          discord:
+            provider: discord
+            client-id: ${DISCORD_CLIENT_ID}
+            client-secret: ${DISCORD_CLIENT_SECRET}
+            client-authentication-method: client_secret_post
+            redirect-uri: "http://localhost:8080/login/oauth2/code/discord"
+            authorization-grant-type: authorization_code
+            scope: webhook.incoming
 
         # 2. PROVIDER: The generic endpoints for the service
         provider:
           linkedin:
+            # Replaced issuer-uri with explicit endpoints for robustness
             authorization-uri: https://www.linkedin.com/oauth/v2/authorization
             token-uri: https://www.linkedin.com/oauth/v2/accessToken
             user-info-uri: https://api.linkedin.com/v2/userinfo
-            user-name-attribute: sub
+            jwk-set-uri: https://www.linkedin.com/oauth/openid/jwks
+            user-name-attribute: sub # Standard for OIDC
+          discord:
+            authorization-uri: https://discord.com/api/oauth2/authorize
+            token-uri: https://discord.com/api/oauth2/token
+            # No user-info-uri for webhook.incoming scope
+            user-name-attribute: id # Must match the key we create in our custom OAuth2UserService
+            
+# Logging (keep this for debugging)
+logging:
+  level:
+    root: INFO
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: TRACE
+    org.springframework.web.client.RestTemplate: TRACE
+    org.apache.hc.client5.http.wire: TRACE
