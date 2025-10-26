@@ -1,6 +1,6 @@
 // components/content/ChannelSelector.tsx
 import { useState, useEffect } from 'react'
-import { FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus } from 'react-icons/fa'
+import { FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus, FaDiscord } from 'react-icons/fa' // Import FaDiscord
 
 // Define your SocialAccount type on the frontend
 export interface SocialAccount {
@@ -16,6 +16,7 @@ const channelMap = {
   twitter: { icon: FaTwitter, color: 'text-blue-400' },
   instagram: { icon: FaInstagram, color: 'text-pink-500' },
   tiktok: { icon: FaTiktok, color: 'text-black' },
+  discord: { icon: FaDiscord, color: 'text-indigo-500' }, // Add Discord
 }
 
 interface Props {
@@ -61,6 +62,8 @@ export default function ChannelSelector({ selectedAccountIds, onChange }: Props)
     onChange(newSelection)
   }
 
+  const backendBase = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8080'
+
   return (
     <div className="py-2">
       <label className="block text-sm font-medium text-gray-700">Publish to:</label>
@@ -98,11 +101,18 @@ export default function ChannelSelector({ selectedAccountIds, onChange }: Props)
 
         {/* Links to connect new channels */}
         <a
-          href="http://localhost:8080/api/connect/linkedin"
+          href={`${backendBase}/oauth2/authorization/linkedin`}
           className="p-2 rounded-full bg-gray-100 text-blue-700 hover:bg-gray-200"
           title="Connect new LinkedIn profile"
         >
           <FaLinkedin className="w-5 h-5" />
+        </a>
+        <a
+          href={`${backendBase}/api/connect/discord`}
+          className="p-2 rounded-full bg-gray-100 text-indigo-500 hover:bg-gray-200"
+          title="Connect Discord Channel"
+        >
+          <FaDiscord className="w-5 h-5" />
         </a>
         {/* Uncomment or add more connection links as you implement them
         <a

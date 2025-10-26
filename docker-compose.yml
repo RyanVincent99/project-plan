@@ -11,8 +11,9 @@ services:
     env_file:
       - .env
     environment:
-      # This new variable tells Next.js where to find the backend
-      NEXT_PUBLIC_API_URL: "http://localhost:8080/api"
+      # This new variable tells Next.js where to find the backend via the proxy
+      NEXT_PUBLIC_API_URL: "/api/backend"
+      NEXT_PUBLIC_BACKEND_URL: "http://backend:8080"
     depends_on:
       - backend
       - db
@@ -31,6 +32,11 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/project_plan
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER} # Reads from your .env
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD} # Reads from your .env
+      # Pass OAuth credentials to Spring Boot
+      LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID}
+      LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
     depends_on:
       - db
 

@@ -10,6 +10,7 @@ import com.projectplan.scheduler.model.SocialAccount;
 import com.projectplan.scheduler.repository.CommentRepository;
 import com.projectplan.scheduler.repository.PostRepository;
 import com.projectplan.scheduler.repository.SocialAccountRepository;
+import com.projectplan.scheduler.service.PublishingService; // Import the new service
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,9 @@ public class PostController {
     
     @Autowired
     private SocialAccountRepository socialAccountRepository; // Inject new repo
+
+    @Autowired
+    private PublishingService publishingService; // Inject PublishingService
 
     @GetMapping
     public ResponseEntity<List<Post>> getAllPosts() {
@@ -66,6 +70,26 @@ public class PostController {
         
         post.setStatus(request.getStatus());
         Post updatedPost = postRepository.save(post);
+        return ResponseEntity.ok(updatedPost);
+    }
+
+    /**
+     * Publishes a post to its target social media channels.
+     * @param postId The ID of the post to publish.
+     * @return The updated post with status PUBLISHED.
+     */
+    @PostMapping("/{postId}/publish")
+    public ResponseEntity<Post> publishPost(@PathVariable String postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
+
+        // Use the service to handle the publishing logic
+        publishingService.publishPost(post);
+
+        // Update the post's status to PUBLISHED
+        post.setStatus(PostStatus.PUBLISHED);
+        Post updatedPost = postRepository.save(post);
+
         return ResponseEntity.ok(updatedPost);
     }
 
