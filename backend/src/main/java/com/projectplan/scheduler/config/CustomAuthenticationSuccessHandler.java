@@ -1,10 +1,12 @@
 package com.projectplan.scheduler.config;
 
 import com.projectplan.scheduler.model.SocialAccount;
+import com.projectplan.scheduler.model.SocialAccountStatus;
 import com.projectplan.scheduler.repository.SocialAccountRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -40,10 +42,19 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
         String clientRegistrationId = oauthToken.getAuthorizedClientRegistrationId();
 
+        HttpSession session = request.getSession(false);
+        String accountId = null;
+        if (session != null) {
+            accountId = (String) session.getAttribute("connectAccountId");
+            if (accountId != null) {
+                session.removeAttribute("connectAccountId");
+            }
+        }
+
         if ("discord".equals(clientRegistrationId)) {
-            handleDiscordLogin(oauthToken);
+            handleDiscordLogin(oauthToken, accountId);
         } else if ("linkedin".equals(clientRegistrationId)) {
-            handleLinkedInLogin(oauthToken);
+            handleLinkedInLogin(oauthToken, accountId);
         }
 
         // After successfully handling the token, clear the security context
@@ -52,10 +63,10 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         SecurityContextHolder.clearContext();
 
         // 4. Redirect user back to the frontend dashboard
-        response.sendRedirect("http://localhost:3000/dashboard");
+        response.sendRedirect("http://localhost:3000/dashboard/settings/channels");
     }
 
-    private void handleLinkedInLogin(OAuth2AuthenticationToken oauthToken) {
+    private void handleLinkedInLogin(OAuth2AuthenticationToken oauthToken, String accountId) {
         String clientRegistrationId = oauthToken.getAuthorizedClientRegistrationId();
 
         OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(
@@ -72,11 +83,18 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         OAuth2RefreshToken refreshToken = client.getRefreshToken();
 
         // 2. Check if account already exists
-        SocialAccount account = socialAccountRepository.findByProviderAndProviderAccountId(clientRegistrationId, providerAccountId)
-            .orElse(new SocialAccount());
+        SocialAccount account;
+        if (accountId != null) {
+            account = socialAccountRepository.findById(accountId)
+                    .orElseThrow(() -> new RuntimeException("Social Account not found with id: " + accountId));
+        } else {
+            account = socialAccountRepository.findByProviderAndProviderAccountId(clientRegistrationId, providerAccountId)
+                .orElse(new SocialAccount());
+        }
 
         // 3. Update or create the social account entity
         account.setProvider(clientRegistrationId);
+        account.setStatus(SocialAccountStatus.CONNECTED);
         account.setProviderAccountId(providerAccountId);
         account.setName(name);
         account.setAccessToken(accessToken.getTokenValue());
@@ -92,7 +110,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         socialAccountRepository.save(account);
     }
 
-    private void handleDiscordLogin(OAuth2AuthenticationToken oauthToken) {
+    private void handleDiscordLogin(OAuth2AuthenticationToken oauthToken, String accountId) {
         OAuth2User principal = oauthToken.getPrincipal();
         Map<String, Object> attributes = principal.getAttributes();
         
@@ -115,10 +133,17 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         String webhookUrl = String.format("https://discord.com/api/webhooks/%s/%s", webhookId, webhookToken);
 
         // Check if an account for this webhook already exists
-        SocialAccount account = socialAccountRepository.findByProviderAndProviderAccountId("discord", webhookId)
-            .orElse(new SocialAccount());
+        SocialAccount account;
+        if (accountId != null) {
+            account = socialAccountRepository.findById(accountId)
+                    .orElseThrow(() -> new RuntimeException("Social Account not found with id: " + accountId));
+        } else {
+            account = socialAccountRepository.findByProviderAndProviderAccountId("discord", webhookId)
+                .orElse(new SocialAccount());
+        }
 
         account.setProvider("discord");
+        account.setStatus(SocialAccountStatus.CONNECTED);
         account.setProviderAccountId(webhookId); // Use webhook ID as the unique ID for this provider
         account.setName(accountName);
         account.setAccessToken(webhookUrl); // Store the full URL

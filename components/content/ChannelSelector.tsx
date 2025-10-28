@@ -1,13 +1,7 @@
 // components/content/ChannelSelector.tsx
 import { useState, useEffect } from 'react'
 import { FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus, FaDiscord } from 'react-icons/fa' // Import FaDiscord
-
-// Define your SocialAccount type on the frontend
-export interface SocialAccount {
-  id: string
-  provider: string
-  name: string
-}
+import { SocialAccount } from '@/contexts/ChannelContext';
 
 // Map provider keys to icons and colors
 const channelMap = {
@@ -22,9 +16,11 @@ const channelMap = {
 interface Props {
   selectedAccountIds: string[]
   onChange: (selectedIds: string[]) => void
+  showConnectionLinks?: boolean
+  fetchMode?: 'all' | 'connected' // Add new prop
 }
 
-export default function ChannelSelector({ selectedAccountIds, onChange }: Props) {
+export default function ChannelSelector({ selectedAccountIds, onChange, showConnectionLinks = true, fetchMode = 'connected' }: Props) {
   const [accounts, setAccounts] = useState<SocialAccount[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -34,8 +30,12 @@ export default function ChannelSelector({ selectedAccountIds, onChange }: Props)
       setIsLoading(true)
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
       try {
-        // Fetch accounts from the new backend endpoint
-        const res = await fetch(`${apiUrl}/social-accounts`) 
+        // Conditionally build the URL based on the fetchMode prop
+        const fetchUrl = fetchMode === 'all'
+          ? `${apiUrl}/social-accounts`
+          : `${apiUrl}/social-accounts?status=CONNECTED`;
+        
+        const res = await fetch(fetchUrl)
         if (res.ok) {
           const data: SocialAccount[] = await res.json()
           setAccounts(data)
@@ -53,7 +53,7 @@ export default function ChannelSelector({ selectedAccountIds, onChange }: Props)
     
     fetchAccounts(); // Fetch accounts when the component mounts
 
-  }, []) // Empty dependency array ensures this runs once
+  }, [fetchMode]) // Add fetchMode to dependency array
 
   const toggleAccount = (id: string) => {
     const newSelection = selectedAccountIds.includes(id)
@@ -100,37 +100,41 @@ export default function ChannelSelector({ selectedAccountIds, onChange }: Props)
         )}
 
         {/* Links to connect new channels */}
-        <a
-          href={`${backendBase}/oauth2/authorization/linkedin`}
-          className="p-2 rounded-full bg-gray-100 text-blue-700 hover:bg-gray-200"
-          title="Connect new LinkedIn profile"
-        >
-          <FaLinkedin className="w-5 h-5" />
-        </a>
-        <a
-          href={`${backendBase}/api/connect/discord`}
-          className="p-2 rounded-full bg-gray-100 text-indigo-500 hover:bg-gray-200"
-          title="Connect Discord Channel"
-        >
-          <FaDiscord className="w-5 h-5" />
-        </a>
-        {/* Uncomment or add more connection links as you implement them
-        <a
-          href="http://localhost:8080/api/connect/facebook"
-          className="p-2 rounded-full bg-gray-100 text-blue-800 hover:bg-gray-200"
-          title="Connect new Facebook page"
-        >
-          <FaFacebook className="w-5 h-5" />
-        </a>
-        */}
-        <a
-          href="#" // Or link to a help page?
-          onClick={(e) => e.preventDefault()} // Prevent navigation for now
-          className="p-2 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
-          title="Connect another channel"
-        >
-           <FaPlus className="w-5 h-5" />
-        </a>
+        {showConnectionLinks && (
+          <>
+            <a
+              href={`${backendBase}/connect/linkedin`}
+              className="p-2 rounded-full bg-gray-100 text-blue-700 hover:bg-gray-200"
+              title="Connect new LinkedIn profile"
+            >
+              <FaLinkedin className="w-5 h-5" />
+            </a>
+            <a
+              href={`${backendBase}/connect/discord`}
+              className="p-2 rounded-full bg-gray-100 text-indigo-500 hover:bg-gray-200"
+              title="Connect Discord Channel"
+            >
+              <FaDiscord className="w-5 h-5" />
+            </a>
+            {/* Uncomment or add more connection links as you implement them
+            <a
+              href="http://localhost:8080/api/connect/facebook"
+              className="p-2 rounded-full bg-gray-100 text-blue-800 hover:bg-gray-200"
+              title="Connect new Facebook page"
+            >
+              <FaFacebook className="w-5 h-5" />
+            </a>
+            */}
+            <a
+              href="#" // Or link to a help page?
+              onClick={(e) => e.preventDefault()} // Prevent navigation for now
+              className="p-2 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+              title="Connect another channel"
+            >
+              <FaPlus className="w-5 h-5" />
+            </a>
+          </>
+        )}
       </div>
     </div>
   )

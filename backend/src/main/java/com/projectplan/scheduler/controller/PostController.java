@@ -37,7 +37,13 @@ public class PostController {
 
     @GetMapping
     public ResponseEntity<List<Post>> getAllPosts() {
-        List<Post> posts = postRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+        List<Post> posts = postRepository.findAllByStatusNot(PostStatus.ARCHIVED, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return ResponseEntity.ok(posts);
+    }
+
+    @GetMapping("/archived")
+    public ResponseEntity<List<Post>> getArchivedPosts() {
+        List<Post> posts = postRepository.findAllByStatus(PostStatus.ARCHIVED, Sort.by(Sort.Direction.DESC, "createdAt"));
         return ResponseEntity.ok(posts);
     }
 
@@ -91,6 +97,15 @@ public class PostController {
         Post updatedPost = postRepository.save(post);
 
         return ResponseEntity.ok(updatedPost);
+    }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<Void> deletePost(@PathVariable String postId) {
+        if (!postRepository.existsById(postId)) {
+            return ResponseEntity.notFound().build();
+        }
+        postRepository.deleteById(postId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{postId}/comments")

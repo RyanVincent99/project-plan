@@ -15,6 +15,9 @@ public class SocialAccount {
 
     private String provider; // e.g., "linkedin", "facebook"
     
+    @Enumerated(EnumType.STRING)
+    private SocialAccountStatus status;
+
     private String providerAccountId; // The user's ID on that platform
 
     private String name; // e.g., "Andre's LinkedIn Profile"

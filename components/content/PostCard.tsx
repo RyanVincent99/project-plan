@@ -1,7 +1,7 @@
 // components/content/PostCard.tsx
 import React, { useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { FiMessageCircle, FiSend } from 'react-icons/fi'
+import { FiMessageCircle, FiSend, FiTrash2, FiArchive } from 'react-icons/fi'
 import { FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus, FaDiscord } from 'react-icons/fa' // Import icons
 
 // New Comment interface
@@ -22,15 +22,23 @@ const channelMap = {
   discord: { icon: FaDiscord, color: 'text-indigo-500' }, // Add Discord
 }
 
+// A more detailed type for target accounts
+interface TargetAccount {
+  id: string;
+  provider: string;
+  name: string;
+  status: 'CONNECTED' | 'DISCONNECTED';
+}
+
 export interface Post {
   id: string
   content: string
-  status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'SCHEDULED' | 'PUBLISHED'
+  status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'SCHEDULED' | 'PUBLISHED' | 'ARCHIVED'
   createdAt: string
   authorId: string
   scheduledAt?: string
   comments: Comment[]
-  targets: { provider: string }[] // UPDATED: Post now has a targets
+  targets: TargetAccount[] // Use the more detailed type
 }
 
 interface PostCardProps {
@@ -48,6 +56,8 @@ const getStatusStyles = (status: Post['status']) => {
       return { bg: 'bg-red-100', text: 'text-red-800', dot: 'bg-red-500' };
     case 'SCHEDULED':
       return { bg: 'bg-blue-100', text: 'text-blue-800', dot: 'bg-blue-500' };
+    case 'ARCHIVED':
+      return { bg: 'bg-gray-100', text: 'text-gray-800', dot: 'bg-gray-500' };
     default:
       return { bg: 'bg-gray-100', text: 'text-gray-800', dot: 'bg-gray-500' };
   }
@@ -60,8 +70,12 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
   const [newComment, setNewComment] = useState('')
   const [isCommenting, setIsCommenting] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false) // For publish button
+  const [isDeleting, setIsDeleting] = useState(false)
   const statusStyles = getStatusStyles(currentStatus)
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
+
+  // Check if there are any connected targets for this post
+  const hasConnectedTargets = post.targets && post.targets.some(t => t.status === 'CONNECTED');
 
   const handleUpdateStatus = async (newStatus: Post['status']) => {
     setCurrentStatus(newStatus); 
@@ -71,9 +85,15 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
-      if (!response.ok) setCurrentStatus(post.status);
+      if (response.ok) {
+        if (newStatus === 'ARCHIVED') {
+          onPostUpdate(); // Refresh list to remove this post
+        }
+      } else {
+        setCurrentStatus(post.status); // Revert on failure
+      }
     } catch (error) {
-      setCurrentStatus(post.status);
+      setCurrentStatus(post.status); // Revert on failure
     }
   };
 
@@ -121,6 +141,27 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
     }
   };
 
+  const handleDelete = async () => {
+    if (window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      setIsDeleting(true);
+      try {
+        const response = await fetch(`${apiUrl}/posts/${post.id}`, {
+          method: 'DELETE',
+        });
+        if (response.ok) {
+          onPostUpdate(); // Refresh the post list
+        } else {
+          alert('Failed to delete post.');
+        }
+      } catch (error) {
+        console.error('Error deleting post:', error);
+        alert('An error occurred while deleting the post.');
+      } finally {
+        setIsDeleting(false);
+      }
+    }
+  };
+
   return (
     <div className="bg-white shadow-lg rounded-2xl overflow-hidden max-w-2xl mx-auto my-4">
       {/* Card Header */}
@@ -144,6 +185,14 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
             const { icon: Icon, color } = channelMap[providerKey] || { icon: FaPlus, color: 'text-gray-400' }
             return <Icon key={`${target.provider}-${index}`} className={`w-5 h-5 ${color}`} />
           })}
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="text-gray-500 hover:text-red-600 disabled:opacity-50 ml-2 p-1 rounded-full hover:bg-red-100 transition-colors"
+            title="Delete Post"
+          >
+            <FiTrash2 className="w-5 h-5" />
+          </button>
         </div>
         {/* ------------------------- */}
       </div>
@@ -168,12 +217,21 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
           
           {/* Approval Buttons */}
           <div className="flex items-center space-x-2">
+            {(currentStatus === 'PUBLISHED' || currentStatus === 'ARCHIVED') && (
+                <button
+                    onClick={() => handleUpdateStatus('ARCHIVED')}
+                    className="flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                >
+                    <FiArchive className="w-4 h-4 mr-1" />
+                    Archive
+                </button>
+            )}
             {(currentStatus === 'APPROVED' || currentStatus === 'SCHEDULED') && (
               <button
                 onClick={handlePublish}
                 className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50"
-                disabled={isPublishing || post.targets.length === 0}
-                title={post.targets.length === 0 ? "Add a channel to publish" : "Publish to channels"}
+                disabled={isPublishing || !hasConnectedTargets}
+                title={!hasConnectedTargets ? "Connect a channel to publish this post" : "Publish to channels"}
               >
                 {isPublishing ? 'Publishing...' : 'Publish Now'}
               </button>
@@ -181,14 +239,14 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
             <button 
               onClick={() => handleUpdateStatus('REJECTED')}
               className="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 disabled:opacity-50"
-              disabled={currentStatus === 'REJECTED'}
+              disabled={currentStatus === 'REJECTED' || currentStatus === 'PUBLISHED'}
             >
               Reject
             </button>
             <button 
               onClick={() => handleUpdateStatus('APPROVED')}
               className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
-              disabled={currentStatus === 'APPROVED'}
+              disabled={currentStatus === 'APPROVED' || currentStatus === 'PUBLISHED'}
             >
               Approve
             </button>

@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import { Post } from '@/components/content/PostCard'
 import { useState, useEffect, useCallback } from 'react'
 import { FiLayout, FiCalendar, FiPlus } from 'react-icons/fi'
+import { useRouter } from 'next/router'
 
 // Import the new components
 import CreatePostModal from '@/components/content/CreatePostModal'
@@ -19,6 +20,7 @@ export default function Dashboard() {
   const [view, setView] = useState<View>('feed')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { data: session } = useSession()
+  const router = useRouter()
 
   // Use useCallback to memoize fetchPosts so it can be passed as a prop
   const fetchPosts = useCallback(async () => {
@@ -42,6 +44,12 @@ export default function Dashboard() {
       fetchPosts()
     }
   }, [session, fetchPosts])
+
+  const channelFilter = Array.isArray(router.query.channel) ? router.query.channel[0] : router.query.channel;
+
+  const filteredPosts = channelFilter
+    ? posts.filter(post => post.targets.some(target => target.id === channelFilter))
+    : posts;
 
   return (
     <DashboardLayout>
@@ -81,7 +89,7 @@ export default function Dashboard() {
       <div>
         {view === 'feed' && (
           <FeedView 
-            posts={posts} 
+            posts={filteredPosts} 
             isLoading={isLoading} 
             onRefresh={fetchPosts} 
           />
@@ -96,6 +104,7 @@ export default function Dashboard() {
         isOpen={isModalOpen}
         setIsOpen={setIsModalOpen}
         onPostCreated={fetchPosts} // Pass fetchPosts as the callback
+        preselectedChannelId={channelFilter}
       />
     </DashboardLayout>
   )

@@ -1,6 +1,6 @@
 // components/content/CreatePostModal.tsx
 import { Dialog, Transition } from '@headlessui/react'
-import { Fragment, useState } from 'react'
+import { Fragment, useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { XMarkIcon } from '@heroicons/react/24/solid'
 import ChannelSelector from './ChannelSelector' // Import the new component
@@ -9,14 +9,21 @@ interface Props {
   isOpen: boolean
   setIsOpen: (isOpen: boolean) => void
   onPostCreated: () => void // Callback to refresh the post list
+  preselectedChannelId?: string | null
 }
 
-export default function CreatePostModal({ isOpen, setIsOpen, onPostCreated }: Props) {
+export default function CreatePostModal({ isOpen, setIsOpen, onPostCreated, preselectedChannelId }: Props) {
   const { data: session } = useSession()
   const [content, setContent] = useState('')
   const [scheduledAt, setScheduledAt] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [targetAccountIds, setTargetAccountIds] = useState<string[]>([]) // NEW
+
+  useEffect(() => {
+    if (isOpen && preselectedChannelId) {
+      setTargetAccountIds([preselectedChannelId]);
+    }
+  }, [isOpen, preselectedChannelId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -107,6 +114,8 @@ export default function CreatePostModal({ isOpen, setIsOpen, onPostCreated }: Pr
                   <ChannelSelector 
                     selectedAccountIds={targetAccountIds}
                     onChange={setTargetAccountIds}
+                    showConnectionLinks={false}
+                    fetchMode="all"
                   />
                 </div>
                 {/* ---------------------------------- */}
