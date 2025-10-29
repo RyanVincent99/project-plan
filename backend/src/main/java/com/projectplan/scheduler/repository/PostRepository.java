@@ -14,4 +14,7 @@ public interface PostRepository extends JpaRepository<Post, String> {
     List<Post> findAllByStatusNot(PostStatus status, Sort sort);
     List<Post> findAllByStatus(PostStatus status, Sort sort);
     List<Post> findAllByTargetsContains(SocialAccount socialAccount);
+    List<Post> findAllByWorkspaceIdAndStatusNot(String workspaceId, PostStatus status, Sort sort);
+    List<Post> findAllByWorkspaceIdAndStatus(String workspaceId, PostStatus status, Sort sort);
+    void deleteByWorkspaceId(String workspaceId);
 }

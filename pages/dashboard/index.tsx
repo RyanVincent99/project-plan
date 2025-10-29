@@ -6,6 +6,7 @@ import { Post } from '@/components/content/PostCard'
 import { useState, useEffect, useCallback } from 'react'
 import { FiLayout, FiCalendar, FiPlus } from 'react-icons/fi'
 import { useRouter } from 'next/router'
+import { useWorkspaces } from '@/contexts/WorkspaceContext'; // Import workspace context
 
 // Import the new components
 import CreatePostModal from '@/components/content/CreatePostModal'
@@ -21,13 +22,15 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { data: session } = useSession()
   const router = useRouter()
+  const { currentWorkspace } = useWorkspaces(); // Get current workspace
 
   // Use useCallback to memoize fetchPosts so it can be passed as a prop
   const fetchPosts = useCallback(async () => {
+    if (!currentWorkspace) return; // Don't fetch if no workspace is selected
     setIsLoading(true)
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
     try {
-      const res = await fetch(`${apiUrl}/posts`)
+      const res = await fetch(`${apiUrl}/posts?workspaceId=${currentWorkspace.id}`)
       if (!res.ok) throw new Error('Failed to fetch posts')
       const data: Post[] = await res.json()
       setPosts(data)
@@ -36,14 +39,14 @@ export default function Dashboard() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [currentWorkspace]) // Add currentWorkspace to dependency array
 
   // Fetch posts on initial load
   useEffect(() => {
-    if (session) { // Only fetch if user is logged in
+    if (session && currentWorkspace) { // Only fetch if user is logged in and workspace is selected
       fetchPosts()
     }
-  }, [session, fetchPosts])
+  }, [session, fetchPosts, currentWorkspace])
 
   const channelFilter = Array.isArray(router.query.channel) ? router.query.channel[0] : router.query.channel;
 

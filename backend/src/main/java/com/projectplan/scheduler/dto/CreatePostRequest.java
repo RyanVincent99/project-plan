@@ -10,4 +10,5 @@ public class CreatePostRequest {
     private String authorId;
     private LocalDateTime scheduledAt;
     private List<String> targetAccountIds; // The IDs of channels to post to
+    private String workspaceId;
 }

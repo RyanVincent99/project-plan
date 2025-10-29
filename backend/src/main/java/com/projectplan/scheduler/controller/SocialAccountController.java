@@ -5,8 +5,10 @@ import com.projectplan.scheduler.dto.UpdateChannelRequest;
 import com.projectplan.scheduler.model.Post;
 import com.projectplan.scheduler.model.SocialAccount;
 import com.projectplan.scheduler.model.SocialAccountStatus;
+import com.projectplan.scheduler.model.Workspace;
 import com.projectplan.scheduler.repository.PostRepository;
 import com.projectplan.scheduler.repository.SocialAccountRepository;
+import com.projectplan.scheduler.repository.WorkspaceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,9 @@ public class SocialAccountController {
     @Autowired
     private PostRepository postRepository;
 
+    @Autowired
+    private WorkspaceRepository workspaceRepository;
+
     /**
      * Handles GET requests to /api/social-accounts.
      * Fetches all SocialAccount entities from the database.
@@ -31,17 +36,19 @@ public class SocialAccountController {
      * @return A ResponseEntity containing a list of SocialAccounts and an OK status.
      */
     @GetMapping
-    public ResponseEntity<List<SocialAccount>> getAllSocialAccounts(@RequestParam(required = false) String status) {
+    public ResponseEntity<List<SocialAccount>> getAllSocialAccounts(
+            @RequestParam String workspaceId,
+            @RequestParam(required = false) String status) {
         List<SocialAccount> accounts;
         if (status != null) {
             try {
                 SocialAccountStatus statusEnum = SocialAccountStatus.valueOf(status.toUpperCase());
-                accounts = socialAccountRepository.findAllByStatus(statusEnum);
+                accounts = socialAccountRepository.findAllByWorkspaceIdAndStatus(workspaceId, statusEnum);
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.badRequest().build();
             }
         } else {
-            accounts = socialAccountRepository.findAll();
+            accounts = socialAccountRepository.findAllByWorkspaceId(workspaceId);
         }
         return ResponseEntity.ok(accounts);
     }
@@ -55,10 +62,14 @@ public class SocialAccountController {
      */
     @PostMapping
     public ResponseEntity<SocialAccount> createSocialAccount(@RequestBody CreateChannelRequest request) {
+        Workspace workspace = workspaceRepository.findById(request.getWorkspaceId())
+                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+
         SocialAccount account = new SocialAccount();
         account.setName(request.getName());
         account.setProvider(request.getProvider());
         account.setStatus(SocialAccountStatus.DISCONNECTED);
+        account.setWorkspace(workspace);
         SocialAccount savedAccount = socialAccountRepository.save(account);
         return ResponseEntity.status(201).body(savedAccount);
     }

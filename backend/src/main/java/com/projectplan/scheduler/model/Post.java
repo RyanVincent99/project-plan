@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 import java.util.List; // Required for comments
 import java.util.Set;   // Required for targets
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Data 
 @Entity
@@ -36,6 +37,11 @@ public class Post {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @OrderBy("createdAt ASC")
     private List<Comment> comments;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workspaceId")
+    @JsonIgnore
+    private Workspace workspace;
 
     // NEW: Relationship to SocialAccounts
     @ManyToMany(fetch = FetchType.EAGER)

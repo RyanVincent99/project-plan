@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus, FaDiscord } from 'react-icons/fa' // Import FaDiscord
 import { SocialAccount } from '@/contexts/ChannelContext';
+import { useWorkspaces } from '@/contexts/WorkspaceContext';
 
 // Map provider keys to icons and colors
 const channelMap = {
@@ -23,17 +24,23 @@ interface Props {
 export default function ChannelSelector({ selectedAccountIds, onChange, showConnectionLinks = true, fetchMode = 'connected' }: Props) {
   const [accounts, setAccounts] = useState<SocialAccount[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const { currentWorkspace } = useWorkspaces();
 
   // Fetch all connected accounts
   useEffect(() => {
     const fetchAccounts = async () => {
+      if (!currentWorkspace) {
+        setAccounts([]);
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true)
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
       try {
         // Conditionally build the URL based on the fetchMode prop
         const fetchUrl = fetchMode === 'all'
-          ? `${apiUrl}/social-accounts`
-          : `${apiUrl}/social-accounts?status=CONNECTED`;
+          ? `${apiUrl}/social-accounts?workspaceId=${currentWorkspace.id}`
+          : `${apiUrl}/social-accounts?workspaceId=${currentWorkspace.id}&status=CONNECTED`;
         
         const res = await fetch(fetchUrl)
         if (res.ok) {
@@ -53,7 +60,7 @@ export default function ChannelSelector({ selectedAccountIds, onChange, showConn
     
     fetchAccounts(); // Fetch accounts when the component mounts
 
-  }, [fetchMode]) // Add fetchMode to dependency array
+  }, [fetchMode, currentWorkspace]) // Add fetchMode and currentWorkspace to dependency array
 
   const toggleAccount = (id: string) => {
     const newSelection = selectedAccountIds.includes(id)

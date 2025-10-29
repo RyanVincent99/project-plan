@@ -1,8 +1,9 @@
 // components/content/PostCard.tsx
 import React, { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { FiMessageCircle, FiSend, FiTrash2, FiArchive } from 'react-icons/fi'
+import { FiMessageCircle, FiSend, FiTrash2, FiArchive, FiEdit2 } from 'react-icons/fi'
 import { FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus, FaDiscord } from 'react-icons/fa' // Import icons
+import EditPostModal from './EditPostModal';
 
 // New Comment interface
 export interface Comment {
@@ -71,6 +72,7 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
   const [isCommenting, setIsCommenting] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false) // For publish button
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const statusStyles = getStatusStyles(currentStatus)
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
 
@@ -165,146 +167,161 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-2xl overflow-hidden max-w-2xl mx-auto my-4">
-      {/* Card Header */}
-      <div className={`flex items-center justify-between p-4 border-b border-gray-200 ${statusStyles.bg}`}>
-        <div className="flex items-center">
-          <span className={`h-2.5 w-2.5 rounded-full ${statusStyles.dot} mr-2`}></span>
-          <span className={`text-sm font-semibold uppercase ${statusStyles.text}`}>
-            {currentStatus.replace('_', ' ')}
-          </span>
-          {post.scheduledAt && (
-            <span className="ml-3 text-sm text-gray-600">
-              | Scheduled: {new Date(post.scheduledAt).toLocaleString()}
+    <>
+      <div className="bg-white shadow-lg rounded-2xl overflow-hidden max-w-2xl mx-auto my-4">
+        {/* Card Header */}
+        <div className={`flex items-center justify-between p-4 border-b border-gray-200 ${statusStyles.bg}`}>
+          <div className="flex items-center">
+            <span className={`h-2.5 w-2.5 rounded-full ${statusStyles.dot} mr-2`}></span>
+            <span className={`text-sm font-semibold uppercase ${statusStyles.text}`}>
+              {currentStatus.replace('_', ' ')}
             </span>
-          )}
-        </div>
-        
-        {/* --- Show Channel Icons --- */}
-        <div className="flex items-center space-x-2">
-          {post.targets && post.targets.map((target, index) => {
-            const providerKey = target.provider as keyof typeof channelMap;
-            const { icon: Icon, color } = channelMap[providerKey] || { icon: FaPlus, color: 'text-gray-400' }
-            return <Icon key={`${target.provider}-${index}`} className={`w-5 h-5 ${color}`} />
-          })}
-          <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="text-gray-500 hover:text-red-600 disabled:opacity-50 ml-2 p-1 rounded-full hover:bg-red-100 transition-colors"
-            title="Delete Post"
-          >
-            <FiTrash2 className="w-5 h-5" />
-          </button>
-        </div>
-        {/* ------------------------- */}
-      </div>
-
-      {/* Post Content */}
-      <div className="p-6">
-        <p className="text-gray-800 whitespace-pre-wrap">{post.content}</p>
-      </div>
-
-      {/* Action/Approval Bar */}
-      <div className="bg-gray-50 p-4 border-t border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setShowComments(!showComments)}
-              className="flex items-center text-gray-600 hover:text-indigo-600"
-            >
-              <FiMessageCircle className="w-5 h-5 mr-1" />
-              <span>{post.comments ? post.comments.length : 0} Comments</span>
-            </button>
+            {post.scheduledAt && (
+              <span className="ml-3 text-sm text-gray-600">
+                | Scheduled: {new Date(post.scheduledAt).toLocaleString()}
+              </span>
+            )}
           </div>
           
-          {/* Approval Buttons */}
+          {/* --- Show Channel Icons --- */}
           <div className="flex items-center space-x-2">
-            {(currentStatus === 'PUBLISHED' || currentStatus === 'ARCHIVED') && (
-                <button
-                    onClick={() => handleUpdateStatus('ARCHIVED')}
-                    className="flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
-                >
-                    <FiArchive className="w-4 h-4 mr-1" />
-                    Archive
-                </button>
-            )}
-            {(currentStatus === 'APPROVED' || currentStatus === 'SCHEDULED') && (
-              <button
-                onClick={handlePublish}
-                className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50"
-                disabled={isPublishing || !hasConnectedTargets}
-                title={!hasConnectedTargets ? "Connect a channel to publish this post" : "Publish to channels"}
-              >
-                {isPublishing ? 'Publishing...' : 'Publish Now'}
-              </button>
-            )}
-            <button 
-              onClick={() => handleUpdateStatus('REJECTED')}
-              className="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 disabled:opacity-50"
-              disabled={currentStatus === 'REJECTED' || currentStatus === 'PUBLISHED'}
-            >
-              Reject
-            </button>
-            <button 
-              onClick={() => handleUpdateStatus('APPROVED')}
-              className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
-              disabled={currentStatus === 'APPROVED' || currentStatus === 'PUBLISHED'}
-            >
-              Approve
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Comment Section (Collapsible) */}
-      {showComments && (
-        <div className="p-6 border-t border-gray-200">
-          {/* List of comments */}
-          <div className="flex flex-col space-y-4 max-h-60 overflow-y-auto pr-2">
-            {post.comments && post.comments.length > 0 ? (
-              post.comments.map((comment) => (
-                <div key={comment.id} className="flex items-start space-x-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-gray-300"></div>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">
-                      Author ID: {comment.authorId}
-                    </p>
-                    <p className="text-sm text-gray-700">{comment.text}</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-gray-500">Be the first to comment!</p>
-            )}
-          </div>
-          
-          {/* New comment form */}
-          <form onSubmit={handlePostComment} className="mt-6 flex items-center space-x-3">
-            <img
-              className="h-8 w-8 rounded-full"
-              src={session?.user?.image || '/default-avatar.png'}
-              alt="User avatar"
-            />
-            <input
-              type="text"
-              className="flex-1 rounded-full border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="Write a comment..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              required
-            />
+            {post.targets && post.targets.map((target, index) => {
+              const providerKey = target.provider as keyof typeof channelMap;
+              const { icon: Icon, color } = channelMap[providerKey] || { icon: FaPlus, color: 'text-gray-400' }
+              return <Icon key={`${target.provider}-${index}`} className={`w-5 h-5 ${color}`} />
+            })}
             <button
-              type="submit"
-              disabled={isCommenting}
-              className="inline-flex items-center justify-center p-2 rounded-full text-indigo-600 hover:bg-indigo-100 disabled:opacity-50"
+              onClick={() => setIsEditModalOpen(true)}
+              className="text-gray-500 hover:text-indigo-600 p-1 rounded-full hover:bg-indigo-100 transition-colors"
+              title="Edit Post"
             >
-              <FiSend className="w-5 h-5" />
+              <FiEdit2 className="w-5 h-5" />
             </button>
-          </form>
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="text-gray-500 hover:text-red-600 disabled:opacity-50 p-1 rounded-full hover:bg-red-100 transition-colors"
+              title="Delete Post"
+            >
+              <FiTrash2 className="w-5 h-5" />
+            </button>
+          </div>
+          {/* ------------------------- */}
         </div>
-      )}
-    </div>
+
+        {/* Post Content */}
+        <div className="p-6">
+          <p className="text-gray-800 whitespace-pre-wrap">{post.content}</p>
+        </div>
+
+        {/* Action/Approval Bar */}
+        <div className="bg-gray-50 p-4 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setShowComments(!showComments)}
+                className="flex items-center text-gray-600 hover:text-indigo-600"
+              >
+                <FiMessageCircle className="w-5 h-5 mr-1" />
+                <span>{post.comments ? post.comments.length : 0} Comments</span>
+              </button>
+            </div>
+            
+            {/* Approval Buttons */}
+            <div className="flex items-center space-x-2">
+              {(currentStatus === 'PUBLISHED' || currentStatus === 'ARCHIVED') && (
+                  <button
+                      onClick={() => handleUpdateStatus('ARCHIVED')}
+                      className="flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                  >
+                      <FiArchive className="w-4 h-4 mr-1" />
+                      Archive
+                  </button>
+              )}
+              {(currentStatus === 'APPROVED' || currentStatus === 'SCHEDULED') && (
+                <button
+                  onClick={handlePublish}
+                  className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                  disabled={isPublishing || !hasConnectedTargets}
+                  title={!hasConnectedTargets ? "Connect a channel to publish this post" : "Publish to channels"}
+                >
+                  {isPublishing ? 'Publishing...' : 'Publish Now'}
+                </button>
+              )}
+              <button 
+                onClick={() => handleUpdateStatus('REJECTED')}
+                className="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 disabled:opacity-50"
+                disabled={currentStatus === 'REJECTED' || currentStatus === 'PUBLISHED'}
+              >
+                Reject
+              </button>
+              <button 
+                onClick={() => handleUpdateStatus('APPROVED')}
+                className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
+                disabled={currentStatus === 'APPROVED' || currentStatus === 'PUBLISHED'}
+              >
+                Approve
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Comment Section (Collapsible) */}
+        {showComments && (
+          <div className="p-6 border-t border-gray-200">
+            {/* List of comments */}
+            <div className="flex flex-col space-y-4 max-h-60 overflow-y-auto pr-2">
+              {post.comments && post.comments.length > 0 ? (
+                post.comments.map((comment) => (
+                  <div key={comment.id} className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-gray-300"></div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">
+                        Author ID: {comment.authorId}
+                      </p>
+                      <p className="text-sm text-gray-700">{comment.text}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">Be the first to comment!</p>
+              )}
+            </div>
+            
+            {/* New comment form */}
+            <form onSubmit={handlePostComment} className="mt-6 flex items-center space-x-3">
+              <img
+                className="h-8 w-8 rounded-full"
+                src={session?.user?.image || '/default-avatar.png'}
+                alt="User avatar"
+              />
+              <input
+                type="text"
+                className="flex-1 rounded-full border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder="Write a comment..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                required
+              />
+              <button
+                type="submit"
+                disabled={isCommenting}
+                className="inline-flex items-center justify-center p-2 rounded-full text-indigo-600 hover:bg-indigo-100 disabled:opacity-50"
+              >
+                <FiSend className="w-5 h-5" />
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
+      <EditPostModal
+        isOpen={isEditModalOpen}
+        setIsOpen={setIsEditModalOpen}
+        post={post}
+        onPostUpdated={onPostUpdate}
+      />
+    </>
   )
 }

@@ -13,4 +13,7 @@ public interface SocialAccountRepository extends JpaRepository<SocialAccount, St
     // This method is used by the OAuthController to find existing accounts
     Optional<SocialAccount> findByProviderAndProviderAccountId(String provider, String providerAccountId);
     List<SocialAccount> findAllByStatus(SocialAccountStatus status);
+    List<SocialAccount> findAllByWorkspaceId(String workspaceId);
+    List<SocialAccount> findAllByWorkspaceIdAndStatus(String workspaceId, SocialAccountStatus status);
+    void deleteByWorkspaceId(String workspaceId);
 }

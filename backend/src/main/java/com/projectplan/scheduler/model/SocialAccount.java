@@ -1,5 +1,6 @@
 package com.projectplan.scheduler.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -30,7 +31,8 @@ public class SocialAccount {
 
     private LocalDateTime expiresAt;
     
-    // In a real app, you would link this to a Workspace or User
-    // @ManyToOne
-    // private Workspace workspace;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workspaceId")
+    @JsonIgnore
+    private Workspace workspace;
 }

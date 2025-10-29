@@ -32,9 +32,9 @@ export default function Home() {
           )}
 
           {session && (
-            <Link href="/dashboard">
+            <Link href="/workspaces">
               <a className="px-6 py-3 text-lg font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                Go to Dashboard
+                Go to Workspaces
               </a>
             </Link>
           )}

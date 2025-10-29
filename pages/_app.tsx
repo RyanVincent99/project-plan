@@ -2,6 +2,8 @@
 import '@/styles/globals.css'
 import type { AppProps } from 'next/app'
 import { SessionProvider } from 'next-auth/react'
+import { WorkspaceProvider } from '@/contexts/WorkspaceContext'
+import { ChannelProvider } from '@/contexts/ChannelContext'
 
 export default function App({
   Component,
@@ -9,7 +11,11 @@ export default function App({
 }: AppProps) {
   return (
     <SessionProvider session={session}>
-      <Component {...pageProps} />
+      <WorkspaceProvider>
+        <ChannelProvider>
+          <Component {...pageProps} />
+        </ChannelProvider>
+      </WorkspaceProvider>
     </SessionProvider>
   )
 }
