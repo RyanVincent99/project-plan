@@ -1,5 +1,5 @@
 // components/content/PostCard.tsx
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { FiMessageCircle, FiSend, FiTrash2, FiArchive } from 'react-icons/fi'
 import { FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus, FaDiscord } from 'react-icons/fa' // Import icons
@@ -74,6 +74,10 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
   const statusStyles = getStatusStyles(currentStatus)
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
 
+  useEffect(() => {
+    setCurrentStatus(post.status);
+  }, [post.status]);
+
   // Check if there are any connected targets for this post
   const hasConnectedTargets = post.targets && post.targets.some(t => t.status === 'CONNECTED');
 
@@ -86,9 +90,7 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
         body: JSON.stringify({ status: newStatus }),
       });
       if (response.ok) {
-        if (newStatus === 'ARCHIVED') {
-          onPostUpdate(); // Refresh list to remove this post
-        }
+        onPostUpdate(); // Refresh list for any status change
       } else {
         setCurrentStatus(post.status); // Revert on failure
       }
