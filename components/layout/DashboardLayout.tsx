@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { FiGrid, FiArchive, FiSettings } from 'react-icons/fi';
 import ChannelList from './ChannelList';
 import WorkspaceSwitcher from './WorkspaceSwitcher';
+import UserProfile from './UserProfile';
 
 interface Props {
   children: ReactNode;
@@ -50,7 +51,7 @@ export default function DashboardLayout({ children }: Props) {
         </div>
 
         <div className="p-4 border-t border-gray-200">
-          <Link href="/dashboard/settings/channels">
+          <Link href="/dashboard/settings">
             <a className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg ${
               currentPath.startsWith('/dashboard/settings') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
             }`}>
@@ -70,7 +71,7 @@ export default function DashboardLayout({ children }: Props) {
               {/* Search Bar or other header items */}
             </div>
             <div className="flex items-center">
-              {/* User profile dropdown (from Next-Auth) */}
+              <UserProfile />
             </div>
           </div>
         </header>
