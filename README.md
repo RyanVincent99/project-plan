@@ -6,11 +6,35 @@ A full-stack web application designed for social media content scheduling and co
 
 ## ✨ Features
 
-* **User Authentication:** Secure sign-in and session management using Next-Auth.
-* **Content Feed:** A central dashboard to view and manage content posts.
-* **Approval Workflow:** A status system for posts (e.g., Draft, Approved, Rejected).
-* **Decoupled Architecture:** A modern, scalable setup with a React-based frontend and a Java-based backend API.
-* **Containerized Environment:** Easily run the entire stack with a single Docker Compose command.
+*   **Workspace & Team Collaboration:**
+    *   Create, rename, and switch between multiple workspaces.
+    *   Invite team members to workspaces via email.
+    *   Role-based access control with three permission levels: Administrator, Publisher, and User.
+    *   Securely manage workspace members and their roles.
+
+*   **Content Creation & Scheduling:**
+    *   Craft social media posts with a simple and intuitive interface.
+    *   Target multiple social media channels with a single post.
+    *   Schedule posts for a specific date and time, or publish them instantly.
+    *   Leave comments on posts for internal team feedback and discussion.
+
+*   **Approval Workflow:**
+    *   A clear status system for posts (e.g., Draft, Pending Approval, Approved, Scheduled, Published).
+    *   Publishers and Administrators can approve or reject posts, ensuring content quality.
+
+*   **Channel Management:**
+    *   Connect social media accounts like LinkedIn and Discord via a secure OAuth2 flow.
+    *   View and manage all connected channels from a central settings page.
+
+*   **Multiple Content Views:**
+    *   **Feed View:** A chronological list of all your active posts.
+    *   **Calendar View:** A visual overview of your scheduled content.
+    *   **Archive:** Keep your feed clean by archiving published posts.
+
+*   **Secure & Modern Stack:**
+    *   Secure user authentication and session management using Next-Auth with Google provider.
+    *   Decoupled architecture with a Next.js frontend and a Spring Boot backend API.
+    *   Fully containerized with Docker for easy setup and deployment.
 
 ---
 

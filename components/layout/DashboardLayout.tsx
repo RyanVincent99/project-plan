@@ -51,7 +51,7 @@ export default function DashboardLayout({ children }: Props) {
         </div>
 
         <div className="p-4 border-t border-gray-200">
-          <Link href="/dashboard/settings">
+          <Link href="/dashboard/settings/account">
             <a className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg ${
               currentPath.startsWith('/dashboard/settings') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-700 hover:bg-gray-100'
             }`}>

@@ -1,15 +1,13 @@
-import { GetServerSideProps } from 'next';
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 
-export default function SettingsIndex() {
-  // This component will not be rendered, as we are redirecting.
-  return null;
+// This page just redirects to the default settings tab.
+export default function SettingsIndexPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/dashboard/settings/account');
+  }, [router]);
+
+  return null; // Or a loading spinner
 }
-
-export const getServerSideProps: GetServerSideProps = async () => {
-  return {
-    redirect: {
-      destination: '/dashboard/settings/account', // Redirect to account settings by default
-      permanent: false,
-    },
-  };
-};

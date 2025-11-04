@@ -19,13 +19,8 @@ public class Workspace {
 
     private String name;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "\"UserWorkspace\"",
-            joinColumns = @JoinColumn(name = "workspaceId"),
-            inverseJoinColumns = @JoinColumn(name = "userId")
-    )
+    @OneToMany(mappedBy = "workspace", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private Set<User> users = new HashSet<>();
+    private Set<UserWorkspace> userWorkspaces = new HashSet<>();
 }

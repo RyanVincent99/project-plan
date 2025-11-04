@@ -22,9 +22,11 @@ public class User {
 
     private String email;
 
-    @ManyToMany(mappedBy = "users", fetch = FetchType.LAZY)
+    private String image;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore // Prevents infinite loops during serialization
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private Set<Workspace> workspaces = new HashSet<>();
+    private Set<UserWorkspace> userWorkspaces = new HashSet<>();
 }

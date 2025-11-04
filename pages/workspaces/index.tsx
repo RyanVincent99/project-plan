@@ -1,9 +1,10 @@
 import { GetServerSideProps } from 'next';
 import { getSession, useSession } from 'next-auth/react';
-import { useWorkspaces } from '@/contexts/WorkspaceContext';
+import { useWorkspaces, Workspace } from '@/contexts/WorkspaceContext';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
-import { FiPlus, FiArrowRight, FiTrash2 } from 'react-icons/fi';
+import { FiPlus, FiArrowRight, FiTrash2, FiEdit2 } from 'react-icons/fi';
+import RenameWorkspaceModal from '@/components/workspaces/RenameWorkspaceModal';
 
 export default function WorkspacesPage() {
   const { data: session } = useSession();
@@ -11,6 +12,7 @@ export default function WorkspacesPage() {
   const router = useRouter();
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
 
   const handleSelectWorkspace = (workspaceId: string) => {
     switchWorkspace(workspaceId);
@@ -31,8 +33,9 @@ export default function WorkspacesPage() {
         });
 
         if (res.ok) {
-          if (session?.user?.id) {
-            await fetchWorkspaces(session.user.id);
+          const user = session?.user;
+          if (user) {
+            await fetchWorkspaces();
           }
         } else {
           alert('Failed to delete workspace.');
@@ -46,7 +49,8 @@ export default function WorkspacesPage() {
 
   const handleCreateWorkspace = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newWorkspaceName.trim() || !session?.user?.id) return;
+    const user = session?.user;
+    if (!newWorkspaceName.trim() || !user) return;
 
     setIsCreating(true);
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
@@ -56,16 +60,14 @@ export default function WorkspacesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: newWorkspaceName,
-          userId: session.user.id,
+          userId: user.id,
         }),
       });
 
       if (res.ok) {
         const newWorkspace = await res.json();
         // Refetch workspaces to update the list
-        if (session.user.id) {
-            await fetchWorkspaces(session.user.id);
-        }
+        await fetchWorkspaces();
         // Switch to the new workspace and redirect
         switchWorkspace(newWorkspace.id);
         router.push('/dashboard');
@@ -96,7 +98,11 @@ export default function WorkspacesPage() {
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-gray-500">Your Workspaces</h3>
             <ul className="space-y-2">
-              {workspaces.map((ws) => (
+              {workspaces.map((ws) => {
+                const currentUserWorkspace = ws.userWorkspaces?.find(uw => uw.user.id === session?.user?.id);
+                const isAdministrator = currentUserWorkspace?.role === 'ADMINISTRATOR';
+
+                return (
                 <li key={ws.id} className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-md">
                   <button
                     onClick={() => handleSelectWorkspace(ws.id)}
@@ -105,16 +111,27 @@ export default function WorkspacesPage() {
                     <span className="font-medium group-hover:text-indigo-600">{ws.name}</span>
                     <FiArrowRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-600" />
                   </button>
-                  <button
-                    onClick={() => handleDeleteWorkspace(ws.id)}
-                    className="ml-4 p-2 text-gray-500 rounded-full hover:bg-red-100 hover:text-red-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={workspaces.length <= 1}
-                    title={workspaces.length <= 1 ? "Cannot delete your only workspace" : "Delete workspace"}
-                  >
-                    <FiTrash2 className="w-5 h-5" />
-                  </button>
+                  <div className="flex items-center ml-2">
+                    <button
+                      onClick={() => setEditingWorkspace(ws)}
+                      className="p-2 text-gray-500 rounded-full hover:bg-gray-100 hover:text-gray-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!isAdministrator}
+                      title={!isAdministrator ? "Only administrators can rename workspaces" : "Rename workspace"}
+                    >
+                      <FiEdit2 className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteWorkspace(ws.id)}
+                      className="p-2 text-gray-500 rounded-full hover:bg-red-100 hover:text-red-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={workspaces.length <= 1 || !isAdministrator}
+                      title={workspaces.length <= 1 ? "Cannot delete your only workspace" : !isAdministrator ? "Only administrators can delete workspaces" : "Delete workspace"}
+                    >
+                      <FiTrash2 className="w-5 h-5" />
+                    </button>
+                  </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </div>
         )}
@@ -141,6 +158,16 @@ export default function WorkspacesPage() {
           </form>
         </div>
       </div>
+      {editingWorkspace && (
+        <RenameWorkspaceModal
+          isOpen={!!editingWorkspace}
+          setIsOpen={() => setEditingWorkspace(null)}
+          workspace={editingWorkspace}
+          onWorkspaceUpdated={() => {
+            fetchWorkspaces();
+          }}
+        />
+      )}
     </div>
   );
 }

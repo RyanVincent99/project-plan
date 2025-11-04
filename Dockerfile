@@ -6,7 +6,7 @@ RUN apt-get update -y && apt-get install -y openssl
 
 COPY package.json package-lock.json* ./
 COPY prisma/schema.prisma ./prisma/
-RUN npm ci
+RUN npm install
 
 # === Stage 2: Build Application ===
 FROM node:18-slim AS builder

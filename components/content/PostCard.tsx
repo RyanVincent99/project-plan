@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import { FiMessageCircle, FiSend, FiTrash2, FiArchive, FiEdit2 } from 'react-icons/fi'
 import { FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus, FaDiscord } from 'react-icons/fa' // Import icons
 import EditPostModal from './EditPostModal';
+import { useWorkspaces } from '@/contexts/WorkspaceContext';
 
 // New Comment interface
 export interface Comment {
@@ -73,6 +74,8 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
   const [isPublishing, setIsPublishing] = useState(false) // For publish button
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const { currentUserRole } = useWorkspaces();
+  const canManagePosts = currentUserRole === 'ADMINISTRATOR' || currentUserRole === 'PUBLISHER';
   const statusStyles = getStatusStyles(currentStatus)
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
 
@@ -103,7 +106,8 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
 
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newComment || !session?.user) return
+    const user = session?.user;
+    if (!newComment || !user) return
     setIsCommenting(true)
 
     try {
@@ -112,7 +116,7 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: newComment,
-          authorId: session.user.id,
+          authorId: user.id,
         }),
       })
       if (res.ok) {
@@ -242,8 +246,8 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
                 <button
                   onClick={handlePublish}
                   className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50"
-                  disabled={isPublishing || !hasConnectedTargets}
-                  title={!hasConnectedTargets ? "Connect a channel to publish this post" : "Publish to channels"}
+                  disabled={!canManagePosts || isPublishing || !hasConnectedTargets}
+                  title={!canManagePosts ? "You don't have permission to publish" : !hasConnectedTargets ? "Connect a channel to publish this post" : "Publish to channels"}
                 >
                   {isPublishing ? 'Publishing...' : 'Publish Now'}
                 </button>
@@ -251,14 +255,16 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
               <button 
                 onClick={() => handleUpdateStatus('REJECTED')}
                 className="px-3 py-1.5 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 disabled:opacity-50"
-                disabled={currentStatus === 'REJECTED' || currentStatus === 'PUBLISHED'}
+                disabled={!canManagePosts || currentStatus === 'REJECTED' || currentStatus === 'PUBLISHED'}
+                title={!canManagePosts ? "You don't have permission to reject posts" : ""}
               >
                 Reject
               </button>
               <button 
                 onClick={() => handleUpdateStatus('APPROVED')}
                 className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
-                disabled={currentStatus === 'APPROVED' || currentStatus === 'PUBLISHED'}
+                disabled={!canManagePosts || currentStatus === 'APPROVED' || currentStatus === 'PUBLISHED'}
+                title={!canManagePosts ? "You don't have permission to approve posts" : ""}
               >
                 Approve
               </button>
