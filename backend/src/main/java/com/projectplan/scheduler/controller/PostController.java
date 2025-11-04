@@ -2,20 +2,24 @@ package com.projectplan.scheduler.controller;
 
 import com.projectplan.scheduler.dto.CreateCommentRequest;
 import com.projectplan.scheduler.dto.CreatePostRequest;
+import com.projectplan.scheduler.dto.UpdatePostRequest;
 import com.projectplan.scheduler.dto.UpdateStatusRequest;
 import com.projectplan.scheduler.model.Comment;
 import com.projectplan.scheduler.model.Post;
 import com.projectplan.scheduler.model.PostStatus;
 import com.projectplan.scheduler.model.SocialAccount;
+import com.projectplan.scheduler.model.Workspace;
 import com.projectplan.scheduler.repository.CommentRepository;
 import com.projectplan.scheduler.repository.PostRepository;
 import com.projectplan.scheduler.repository.SocialAccountRepository;
+import com.projectplan.scheduler.repository.WorkspaceRepository;
 import com.projectplan.scheduler.service.PublishingService; // Import the new service
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
 import java.util.List; // Required for List
 import java.util.Set;   // Required for Set
 
@@ -33,37 +37,84 @@ public class PostController {
     private SocialAccountRepository socialAccountRepository; // Inject new repo
 
     @Autowired
+    private WorkspaceRepository workspaceRepository;
+
+    @Autowired
     private PublishingService publishingService; // Inject PublishingService
 
     @GetMapping
-    public ResponseEntity<List<Post>> getAllPosts() {
-        List<Post> posts = postRepository.findAllByStatusNot(PostStatus.ARCHIVED, Sort.by(Sort.Direction.DESC, "createdAt"));
+    public ResponseEntity<List<Post>> getAllPosts(@RequestParam String workspaceId) {
+        List<Post> posts = postRepository.findAllByWorkspaceIdAndStatusNot(workspaceId, PostStatus.ARCHIVED, Sort.by(Sort.Direction.DESC, "createdAt"));
         return ResponseEntity.ok(posts);
     }
 
     @GetMapping("/archived")
-    public ResponseEntity<List<Post>> getArchivedPosts() {
-        List<Post> posts = postRepository.findAllByStatus(PostStatus.ARCHIVED, Sort.by(Sort.Direction.DESC, "createdAt"));
+    public ResponseEntity<List<Post>> getArchivedPosts(@RequestParam String workspaceId) {
+        List<Post> posts = postRepository.findAllByWorkspaceIdAndStatus(workspaceId, PostStatus.ARCHIVED, Sort.by(Sort.Direction.DESC, "createdAt"));
         return ResponseEntity.ok(posts);
     }
 
     // UPDATED createPost method
     @PostMapping
     public ResponseEntity<Post> createPost(@RequestBody CreatePostRequest request) {
+        Workspace workspace = workspaceRepository.findById(request.getWorkspaceId())
+                .orElseThrow(() -> new RuntimeException("Workspace not found"));
+
         Post post = new Post();
         post.setContent(request.getContent());
         post.setAuthorId(request.getAuthorId());
         post.setScheduledAt(request.getScheduledAt());
         post.setStatus(PostStatus.DRAFT);
+        post.setWorkspace(workspace);
         
         // Add logic to find and set target accounts
         if (request.getTargetAccountIds() != null && !request.getTargetAccountIds().isEmpty()) {
             List<SocialAccount> accounts = socialAccountRepository.findAllById(request.getTargetAccountIds());
-            post.setTargets(Set.copyOf(accounts));
+            post.setTargets(new HashSet<>(accounts));
         }
 
         Post savedPost = postRepository.save(post);
         return ResponseEntity.status(201).body(savedPost);
+    }
+
+    @PutMapping("/{postId}")
+    public ResponseEntity<Post> updatePost(@PathVariable String postId, @RequestBody UpdatePostRequest request) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
+
+        String originalContent = post.getContent();
+        PostStatus originalStatus = post.getStatus();
+
+        // Update content
+        post.setContent(request.getContent());
+        post.setScheduledAt(request.getScheduledAt());
+
+        // Update targets
+        if (request.getTargetAccountIds() != null) {
+            List<SocialAccount> accounts = socialAccountRepository.findAllById(request.getTargetAccountIds());
+            post.setTargets(new HashSet<>(accounts));
+        }
+
+        // Revert status to DRAFT if it was PUBLISHED and content changed
+        if (originalStatus == PostStatus.PUBLISHED && !originalContent.equals(request.getContent())) {
+            post.setStatus(PostStatus.DRAFT);
+        }
+
+        // Update status based on scheduling, but don't override a revert to DRAFT
+        if (post.getStatus() != PostStatus.DRAFT) {
+            if (post.getScheduledAt() != null) {
+                if (post.getStatus() == PostStatus.APPROVED) {
+                    post.setStatus(PostStatus.SCHEDULED);
+                }
+            } else { // scheduledAt is null
+                if (post.getStatus() == PostStatus.SCHEDULED) {
+                    post.setStatus(PostStatus.APPROVED);
+                }
+            }
+        }
+
+        Post updatedPost = postRepository.save(post);
+        return ResponseEntity.ok(updatedPost);
     }
 
     @PutMapping("/{postId}/status")

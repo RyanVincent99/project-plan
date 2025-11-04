@@ -28,11 +28,11 @@ export default function ChannelsSettings() {
   };
 
   return (
-    <>
+    <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Channel Settings</h1>
-          <p className="text-gray-600">Manage your social media channels.</p>
+          <h2 className="text-xl font-bold text-gray-800">Channels</h2>
+          <p className="text-gray-600 mt-1">Manage your connected social media channels.</p>
         </div>
         <button onClick={() => setIsCreateModalOpen(true)} className="flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700">
           <FaPlus className="w-4 h-4 mr-2" />
@@ -41,7 +41,7 @@ export default function ChannelsSettings() {
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Channels</h2>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Channels</h3>
         {isLoading ? (
           <p>Loading...</p>
         ) : accounts.length > 0 ? (
@@ -81,6 +81,6 @@ export default function ChannelsSettings() {
         account={editingAccount}
         onUpdate={handleModalUpdate}
       />
-    </>
+    </div>
   );
 }

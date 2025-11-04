@@ -2,6 +2,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/solid';
 import { FaFacebook, FaTwitter, FaInstagram, FaGoogle, FaYoutube, FaTiktok, FaPinterest, FaCommentDots, FaLinkedin, FaDiscord } from 'react-icons/fa';
+import { useWorkspaces } from '@/contexts/WorkspaceContext';
 
 const providers = [
   { key: 'linkedin', name: 'LinkedIn', icon: FaLinkedin },
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export default function CreateChannelModal({ isOpen, setIsOpen, onChannelCreated }: Props) {
+  const { currentWorkspace } = useWorkspaces();
   const [name, setName] = useState('');
   const [provider, setProvider] = useState(providers[0].key);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,13 +35,17 @@ export default function CreateChannelModal({ isOpen, setIsOpen, onChannelCreated
       alert('Please provide a name and select a channel type.');
       return;
     }
+    if (!currentWorkspace) {
+      alert('No workspace selected.');
+      return;
+    }
     setIsLoading(true);
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
     try {
       const res = await fetch(`${apiUrl}/social-accounts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, provider }),
+        body: JSON.stringify({ name, provider, workspaceId: currentWorkspace.id }),
       });
       if (res.ok) {
         onChannelCreated();

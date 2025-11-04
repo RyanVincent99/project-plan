@@ -2,11 +2,14 @@ import { GetServerSideProps } from 'next';
 import { getSession } from 'next-auth/react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ChannelsSettings from '@/components/settings/ChannelsSettings';
+import SettingsLayout from '@/components/layout/SettingsLayout';
 
 export default function ChannelsSettingsPage() {
   return (
     <DashboardLayout>
-      <ChannelsSettings />
+      <SettingsLayout>
+        <ChannelsSettings />
+      </SettingsLayout>
     </DashboardLayout>
   );
 }

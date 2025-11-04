@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect, useCallback, ReactNode, useContext } from 'react';
+import { useWorkspaces } from './WorkspaceContext'; // Import the new context hook
 
 // Define shared types here
 export interface SocialAccount {
@@ -20,14 +21,20 @@ interface ChannelContextType {
 const ChannelContext = createContext<ChannelContextType | undefined>(undefined);
 
 export function ChannelProvider({ children }: { children: ReactNode }) {
+  const { currentWorkspace } = useWorkspaces(); // Get current workspace
   const [accounts, setAccounts] = useState<FullSocialAccount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchAccounts = useCallback(async () => {
+    if (!currentWorkspace) {
+      setAccounts([]);
+      setIsLoading(false);
+      return;
+    }
     // We don't set loading to true here to avoid a flash on refetch
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
     try {
-      const res = await fetch(`${apiUrl}/social-accounts`);
+      const res = await fetch(`${apiUrl}/social-accounts?workspaceId=${currentWorkspace.id}`);
       if (res.ok) {
         setAccounts(await res.json());
       } else {
@@ -38,7 +45,7 @@ export function ChannelProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentWorkspace]); // Add currentWorkspace as a dependency
 
   useEffect(() => {
     fetchAccounts();
