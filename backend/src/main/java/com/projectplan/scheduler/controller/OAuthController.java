@@ -23,18 +23,6 @@ public class OAuthController {
     // @Autowired
     // private SocialAccountRepository socialAccountRepository;
 
-    // This endpoint is what your "Connect" button will link to
-    @GetMapping("/connect/linkedin")
-    public RedirectView connectLinkedIn() {
-        // This path matches the spring.security.oauth2.client.registration key
-        return new RedirectView("/oauth2/authorization/linkedin");
-    }
-
-    @GetMapping("/connect/discord")
-    public RedirectView connectDiscord() {
-        return new RedirectView("/oauth2/authorization/discord");
-    }
-
     @GetMapping("/connect/{provider}/{accountId}")
     public RedirectView connectWithAccount(@PathVariable String provider, @PathVariable String accountId, HttpServletRequest request) {
         request.getSession().setAttribute("connectAccountId", accountId);

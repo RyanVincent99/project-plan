@@ -34,11 +34,6 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/project_plan
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER} # Reads from your .env
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD} # Reads from your .env
-      # Pass OAuth credentials to Spring Boot
-      LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID}
-      LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET}
-      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
-      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
     depends_on:
       db:
         condition: service_healthy

@@ -1,17 +1,15 @@
 // components/content/ChannelSelector.tsx
 import { useState, useEffect } from 'react'
-import { FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus, FaDiscord } from 'react-icons/fa' // Import FaDiscord
+import { FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus } from 'react-icons/fa' // Import FaDiscord
 import { SocialAccount } from '@/contexts/ChannelContext';
 import { useWorkspaces } from '@/contexts/WorkspaceContext';
 
 // Map provider keys to icons and colors
 const channelMap = {
-  linkedin: { icon: FaLinkedin, color: 'text-blue-700' },
   facebook: { icon: FaFacebook, color: 'text-blue-800' },
   twitter: { icon: FaTwitter, color: 'text-blue-400' },
   instagram: { icon: FaInstagram, color: 'text-pink-500' },
   tiktok: { icon: FaTiktok, color: 'text-black' },
-  discord: { icon: FaDiscord, color: 'text-indigo-500' }, // Add Discord
 }
 
 interface Props {
@@ -109,20 +107,6 @@ export default function ChannelSelector({ selectedAccountIds, onChange, showConn
         {/* Links to connect new channels */}
         {showConnectionLinks && (
           <>
-            <a
-              href={`${backendBase}/connect/linkedin`}
-              className="p-2 rounded-full bg-gray-100 text-blue-700 hover:bg-gray-200"
-              title="Connect new LinkedIn profile"
-            >
-              <FaLinkedin className="w-5 h-5" />
-            </a>
-            <a
-              href={`${backendBase}/connect/discord`}
-              className="p-2 rounded-full bg-gray-100 text-indigo-500 hover:bg-gray-200"
-              title="Connect Discord Channel"
-            >
-              <FaDiscord className="w-5 h-5" />
-            </a>
             {/* Uncomment or add more connection links as you implement them
             <a
               href="http://localhost:8080/api/connect/facebook"

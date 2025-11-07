@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { FiMessageCircle, FiSend, FiTrash2, FiArchive, FiEdit2 } from 'react-icons/fi'
-import { FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus, FaDiscord } from 'react-icons/fa' // Import icons
+import { FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus } from 'react-icons/fa' // Import icons
 import EditPostModal from './EditPostModal';
 import { useWorkspaces } from '@/contexts/WorkspaceContext';
 
@@ -16,12 +16,10 @@ export interface Comment {
 
 // Map provider keys to icons and colors
 const channelMap = {
-  linkedin: { icon: FaLinkedin, color: 'text-blue-700' },
   facebook: { icon: FaFacebook, color: 'text-blue-800' },
   twitter: { icon: FaTwitter, color: 'text-blue-400' },
   instagram: { icon: FaInstagram, color: 'text-pink-500' },
   tiktok: { icon: FaTiktok, color: 'text-black' },
-  discord: { icon: FaDiscord, color: 'text-indigo-500' }, // Add Discord
 }
 
 // A more detailed type for target accounts
