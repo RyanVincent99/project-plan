@@ -42,7 +42,7 @@ export default function ChannelList() {
       {accounts.length > 0 ? (
         accounts.map(account => {
           const Icon = channelIconMap[account.provider] || channelIconMap.default;
-          const isActive = activeChannelId === account.id;
+          const isActive = activeChannelId ? parseInt(Array.isArray(activeChannelId) ? activeChannelId[0] : activeChannelId, 10) === account.id : false;
           return (
             <Link key={account.id} href={`/dashboard?channel=${account.id}`}>
               <a className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg ${

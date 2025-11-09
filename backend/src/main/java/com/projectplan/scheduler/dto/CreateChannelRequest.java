@@ -6,5 +6,5 @@ import lombok.Data;
 public class CreateChannelRequest {
     private String name;
     private String provider;
-    private String workspaceId;
+    private Long workspaceId;
 }

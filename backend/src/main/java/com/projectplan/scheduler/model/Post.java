@@ -15,8 +15,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class Post {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID) // Use standard UUID
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(columnDefinition = "TEXT")
     private String content;

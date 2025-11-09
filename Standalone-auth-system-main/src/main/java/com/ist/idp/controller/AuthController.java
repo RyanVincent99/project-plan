@@ -1,0 +1,49 @@
+package com.ist.idp.controller;
+
+import com.ist.idp.dto.request.LoginRequest;
+import com.ist.idp.dto.request.RegisterRequest;
+import com.ist.idp.dto.request.VerifyOtpRequest;
+import com.ist.idp.dto.response.ApiMessageResponse;
+import com.ist.idp.dto.response.AuthResponse;
+import com.ist.idp.dto.response.AuthResponseDto;
+import com.ist.idp.service.AuthService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
+public class AuthController {
+
+    private final AuthService authService;
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        authService.register(request);
+        return new ResponseEntity<>(new ApiMessageResponse("Registration successful. Please check your email for the verification OTP."), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponseDto> login(@RequestBody LoginRequest request) {
+        AuthResponse authResponse = authService.login(request);
+        return ResponseEntity.ok(new AuthResponseDto(authResponse.accessToken(), authResponse.refreshToken()));
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
+        authService.verifyOtp(request.email(), request.otp());
+        return ResponseEntity.ok(new ApiMessageResponse("Email verified successfully. You can now log in."));
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<AuthResponseDto> refreshToken(@RequestBody AuthResponseDto request) {
+        AuthResponse authResponse = authService.refreshToken(request.refreshToken());
+        return ResponseEntity.ok(new AuthResponseDto(authResponse.accessToken(), authResponse.refreshToken()));
+    }
+
+}

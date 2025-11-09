@@ -10,11 +10,11 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface PostRepository extends JpaRepository<Post, String> {
+public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findAllByStatusNot(PostStatus status, Sort sort);
     List<Post> findAllByStatus(PostStatus status, Sort sort);
     List<Post> findAllByTargetsContains(SocialAccount socialAccount);
-    List<Post> findAllByWorkspaceIdAndStatusNot(String workspaceId, PostStatus status, Sort sort);
-    List<Post> findAllByWorkspaceIdAndStatus(String workspaceId, PostStatus status, Sort sort);
-    void deleteByWorkspaceId(String workspaceId);
+    List<Post> findAllByWorkspaceIdAndStatusNot(Long workspaceId, PostStatus status, Sort sort);
+    List<Post> findAllByWorkspaceIdAndStatus(Long workspaceId, PostStatus status, Sort sort);
+    void deleteByWorkspaceId(Long workspaceId);
 }

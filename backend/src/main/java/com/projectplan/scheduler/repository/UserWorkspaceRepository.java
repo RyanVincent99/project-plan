@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface UserWorkspaceRepository extends JpaRepository<UserWorkspace, String> {
-    void deleteByWorkspaceId(String workspaceId);
-    Optional<UserWorkspace> findByUser_IdAndWorkspace_Id(String userId, String workspaceId);
+public interface UserWorkspaceRepository extends JpaRepository<UserWorkspace, Long> {
+    void deleteByWorkspaceId(Long workspaceId);
+    Optional<UserWorkspace> findByUser_IdAndWorkspace_Id(String userId, Long workspaceId);
 }

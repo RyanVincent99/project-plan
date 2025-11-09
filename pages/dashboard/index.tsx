@@ -51,7 +51,7 @@ export default function Dashboard() {
   const channelFilter = Array.isArray(router.query.channel) ? router.query.channel[0] : router.query.channel;
 
   const filteredPosts = channelFilter
-    ? posts.filter(post => post.targets.some(target => target.id === channelFilter))
+    ? posts.filter(post => post.targets.some(target => target.id === parseInt(channelFilter, 10)))
     : posts;
 
   return (

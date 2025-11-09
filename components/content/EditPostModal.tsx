@@ -13,7 +13,7 @@ interface Props {
 
 export default function EditPostModal({ isOpen, setIsOpen, post, onPostUpdated }: Props) {
   const [content, setContent] = useState('')
-  const [targetAccountIds, setTargetAccountIds] = useState<string[]>([])
+  const [targetAccountIds, setTargetAccountIds] = useState<number[]>([])
   const [scheduledAt, setScheduledAt] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -116,7 +116,7 @@ export default function EditPostModal({ isOpen, setIsOpen, post, onPostUpdated }
                 </Dialog.Title>
 
                 <div className="mt-4">
-                  <ChannelSelector 
+                  <ChannelSelector<number> 
                     selectedAccountIds={targetAccountIds}
                     onChange={setTargetAccountIds}
                     showConnectionLinks={false}
