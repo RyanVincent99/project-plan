@@ -3,7 +3,7 @@ import { useWorkspaces } from './WorkspaceContext'; // Import the new context ho
 
 // Define shared types here
 export interface SocialAccount {
-  id: string;
+  id: number;
   provider: string;
   name: string;
 }

@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { FiMessageCircle, FiSend, FiTrash2, FiArchive, FiEdit2 } from 'react-icons/fi'
-import { FaLinkedin, FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus, FaDiscord } from 'react-icons/fa' // Import icons
+import { FaFacebook, FaTwitter, FaInstagram, FaTiktok, FaPlus, FaLinkedin, FaDiscord } from 'react-icons/fa' // Import icons
 import EditPostModal from './EditPostModal';
+import ErrorModal from './ErrorModal';
 import { useWorkspaces } from '@/contexts/WorkspaceContext';
 
 // New Comment interface
@@ -16,24 +17,24 @@ export interface Comment {
 
 // Map provider keys to icons and colors
 const channelMap = {
-  linkedin: { icon: FaLinkedin, color: 'text-blue-700' },
   facebook: { icon: FaFacebook, color: 'text-blue-800' },
   twitter: { icon: FaTwitter, color: 'text-blue-400' },
   instagram: { icon: FaInstagram, color: 'text-pink-500' },
   tiktok: { icon: FaTiktok, color: 'text-black' },
-  discord: { icon: FaDiscord, color: 'text-indigo-500' }, // Add Discord
+  linkedin: { icon: FaLinkedin, color: 'text-blue-700' },
+  discord: { icon: FaDiscord, color: 'text-indigo-500' },
 }
 
 // A more detailed type for target accounts
 interface TargetAccount {
-  id: string;
+  id: number;
   provider: string;
   name: string;
   status: 'CONNECTED' | 'DISCONNECTED';
 }
 
 export interface Post {
-  id: string
+  id: number
   content: string
   status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'SCHEDULED' | 'PUBLISHED' | 'ARCHIVED'
   createdAt: string
@@ -74,6 +75,8 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
   const [isPublishing, setIsPublishing] = useState(false) // For publish button
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { currentUserRole } = useWorkspaces();
   const canManagePosts = currentUserRole === 'ADMINISTRATOR' || currentUserRole === 'PUBLISHER';
   const statusStyles = getStatusStyles(currentStatus)
@@ -139,11 +142,13 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
       if (response.ok) {
         onPostUpdate(); // Refresh the post list to show the new 'PUBLISHED' status
       } else {
-        alert('Failed to publish post.');
+        const error = await response.text();
+        setErrorMessage(error);
+        setIsErrorModalOpen(true);
       }
     } catch (error) {
-      console.error('Error publishing post:', error);
-      alert('An error occurred while publishing the post.');
+      setErrorMessage('An error occurred while publishing the post.');
+      setIsErrorModalOpen(true);
     } finally {
       setIsPublishing(false);
     }
@@ -327,6 +332,11 @@ export default function PostCard({ post, onPostUpdate }: PostCardProps) {
         setIsOpen={setIsEditModalOpen}
         post={post}
         onPostUpdated={onPostUpdate}
+      />
+      <ErrorModal
+        isOpen={isErrorModalOpen}
+        setIsOpen={setIsErrorModalOpen}
+        message={errorMessage}
       />
     </>
   )

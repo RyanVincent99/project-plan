@@ -107,7 +107,7 @@ public class WorkspaceController {
 
     @PutMapping("/{workspaceId}")
     @Transactional
-    public ResponseEntity<Workspace> updateWorkspace(@PathVariable String workspaceId, @RequestBody UpdateWorkspaceRequest request) {
+    public ResponseEntity<Workspace> updateWorkspace(@PathVariable Long workspaceId, @RequestBody UpdateWorkspaceRequest request) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new RuntimeException("Workspace not found with id: " + workspaceId));
 
@@ -126,7 +126,7 @@ public class WorkspaceController {
 
     @PostMapping("/{workspaceId}/members")
     @Transactional
-    public ResponseEntity<UserWorkspace> inviteUserToWorkspace(@PathVariable String workspaceId, @RequestBody InviteUserRequest request) {
+    public ResponseEntity<UserWorkspace> inviteUserToWorkspace(@PathVariable Long workspaceId, @RequestBody InviteUserRequest request) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new RuntimeException("Workspace not found"));
 
@@ -160,7 +160,7 @@ public class WorkspaceController {
 
     @PutMapping("/{workspaceId}/members/{memberUserId}")
     @Transactional
-    public ResponseEntity<Object> updateUserRole(@PathVariable String workspaceId, @PathVariable String memberUserId, @RequestBody UpdateUserRoleRequest request) {
+    public ResponseEntity<Object> updateUserRole(@PathVariable Long workspaceId, @PathVariable String memberUserId, @RequestBody UpdateUserRoleRequest request) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new RuntimeException("Workspace not found"));
 
@@ -193,7 +193,7 @@ public class WorkspaceController {
 
     @DeleteMapping("/{workspaceId}/members/{memberUserId}")
     @Transactional
-    public ResponseEntity<Object> removeUserFromWorkspace(@PathVariable String workspaceId, @PathVariable String memberUserId, @RequestParam String adminUserId) {
+    public ResponseEntity<Object> removeUserFromWorkspace(@PathVariable Long workspaceId, @PathVariable String memberUserId, @RequestParam String adminUserId) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new RuntimeException("Workspace not found"));
 
@@ -230,14 +230,14 @@ public class WorkspaceController {
 
     @DeleteMapping("/{workspaceId}")
     @Transactional
-    public ResponseEntity<Void> deleteWorkspace(@PathVariable String workspaceId) {
+    public ResponseEntity<Void> deleteWorkspace(@PathVariable Long workspaceId) {
         if (!workspaceRepository.existsById(workspaceId)) {
             return ResponseEntity.notFound().build();
         }
 
         // Delete associated entities first to avoid constraint violations
         postRepository.deleteByWorkspaceId(workspaceId);
-        socialAccountRepository.deleteByWorkspaceId(workspaceId);
+        socialAccountRepository.deleteAll(socialAccountRepository.findAllByWorkspaceId(workspaceId));
         userWorkspaceRepository.deleteByWorkspaceId(workspaceId);
 
         // Now delete the workspace

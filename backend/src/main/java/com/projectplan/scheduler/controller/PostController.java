@@ -16,6 +16,7 @@ import com.projectplan.scheduler.repository.WorkspaceRepository;
 import com.projectplan.scheduler.service.PublishingService; // Import the new service
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,13 +44,13 @@ public class PostController {
     private PublishingService publishingService; // Inject PublishingService
 
     @GetMapping
-    public ResponseEntity<List<Post>> getAllPosts(@RequestParam String workspaceId) {
+    public ResponseEntity<List<Post>> getAllPosts(@RequestParam Long workspaceId) {
         List<Post> posts = postRepository.findAllByWorkspaceIdAndStatusNot(workspaceId, PostStatus.ARCHIVED, Sort.by(Sort.Direction.DESC, "createdAt"));
         return ResponseEntity.ok(posts);
     }
 
     @GetMapping("/archived")
-    public ResponseEntity<List<Post>> getArchivedPosts(@RequestParam String workspaceId) {
+    public ResponseEntity<List<Post>> getArchivedPosts(@RequestParam Long workspaceId) {
         List<Post> posts = postRepository.findAllByWorkspaceIdAndStatus(workspaceId, PostStatus.ARCHIVED, Sort.by(Sort.Direction.DESC, "createdAt"));
         return ResponseEntity.ok(posts);
     }
@@ -69,7 +70,10 @@ public class PostController {
         
         // Add logic to find and set target accounts
         if (request.getTargetAccountIds() != null && !request.getTargetAccountIds().isEmpty()) {
-            List<SocialAccount> accounts = socialAccountRepository.findAllById(request.getTargetAccountIds());
+            List<Long> targetAccountIds = request.getTargetAccountIds().stream()
+                    .map(Long::parseLong)
+                    .toList();
+            List<SocialAccount> accounts = socialAccountRepository.findAllById(targetAccountIds);
             post.setTargets(new HashSet<>(accounts));
         }
 
@@ -78,7 +82,7 @@ public class PostController {
     }
 
     @PutMapping("/{postId}")
-    public ResponseEntity<Post> updatePost(@PathVariable String postId, @RequestBody UpdatePostRequest request) {
+    public ResponseEntity<Post> updatePost(@PathVariable Long postId, @RequestBody UpdatePostRequest request) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
 
@@ -91,7 +95,10 @@ public class PostController {
 
         // Update targets
         if (request.getTargetAccountIds() != null) {
-            List<SocialAccount> accounts = socialAccountRepository.findAllById(request.getTargetAccountIds());
+            List<Long> targetAccountIds = request.getTargetAccountIds().stream()
+                    .map(Long::parseLong)
+                    .toList();
+            List<SocialAccount> accounts = socialAccountRepository.findAllById(targetAccountIds);
             post.setTargets(new HashSet<>(accounts));
         }
 
@@ -119,7 +126,7 @@ public class PostController {
 
     @PutMapping("/{postId}/status")
     public ResponseEntity<Post> updatePostStatus(
-            @PathVariable String postId,
+            @PathVariable Long postId,
             @RequestBody UpdateStatusRequest request) {
         
         Post post = postRepository.findById(postId)
@@ -136,22 +143,26 @@ public class PostController {
      * @return The updated post with status PUBLISHED.
      */
     @PostMapping("/{postId}/publish")
-    public ResponseEntity<Post> publishPost(@PathVariable String postId) {
+    public ResponseEntity<?> publishPost(@PathVariable Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
 
-        // Use the service to handle the publishing logic
-        publishingService.publishPost(post);
+        try {
+            // Use the service to handle the publishing logic
+            publishingService.publishPost(post);
 
-        // Update the post's status to PUBLISHED
-        post.setStatus(PostStatus.PUBLISHED);
-        Post updatedPost = postRepository.save(post);
+            // Update the post's status to PUBLISHED
+            post.setStatus(PostStatus.PUBLISHED);
+            Post updatedPost = postRepository.save(post);
 
-        return ResponseEntity.ok(updatedPost);
+            return ResponseEntity.ok(updatedPost);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
     @DeleteMapping("/{postId}")
-    public ResponseEntity<Void> deletePost(@PathVariable String postId) {
+    public ResponseEntity<Void> deletePost(@PathVariable Long postId) {
         if (!postRepository.existsById(postId)) {
             return ResponseEntity.notFound().build();
         }
@@ -161,7 +172,7 @@ public class PostController {
 
     @PostMapping("/{postId}/comments")
     public ResponseEntity<Comment> createComment(
-            @PathVariable String postId,
+            @PathVariable Long postId,
             @RequestBody CreateCommentRequest request) {
         
         Post post = postRepository.findById(postId)

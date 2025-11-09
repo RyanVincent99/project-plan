@@ -68,7 +68,10 @@ export default function EditChannelModal({ isOpen, setIsOpen, account, onUpdate 
     }
   };
 
-  const connectUrl = `${backendBase}/connect/${account.provider}/${account.id}`;
+  const authServiceUrl = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:8081';
+  const frontendUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+  const redirectUri = `${frontendUrl}/dashboard/settings/linkedin-callback?socialAccountId=${account.id}`;
+  const connectUrl = `${authServiceUrl}/linkedin/authorize?redirect_uri=${encodeURIComponent(redirectUri)}`;
 
   return (
     <Transition appear show={isOpen} as={Fragment}>

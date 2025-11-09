@@ -34,14 +34,11 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/project_plan
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER} # Reads from your .env
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD} # Reads from your .env
-      # Pass OAuth credentials to Spring Boot
-      LINKEDIN_CLIENT_ID: ${LINKEDIN_CLIENT_ID}
-      LINKEDIN_CLIENT_SECRET: ${LINKEDIN_CLIENT_SECRET}
-      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
-      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
     depends_on:
       db:
         condition: service_healthy
+      auth-app:
+        condition: service_started
 
   # Service 3: PostgreSQL Database
   db:
@@ -60,5 +57,35 @@ services:
       timeout: 5s
       retries: 5
 
+  auth-app:
+    build:
+      context: ./Standalone-auth-system-main
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    env_file:
+      - ./Standalone-auth-system-main/.env
+    depends_on:
+      auth-db:
+        condition: service_healthy
+
+  auth-db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: idp_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - auth-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d idp_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+
 volumes:
   postgres-data:
+  auth-postgres-data:

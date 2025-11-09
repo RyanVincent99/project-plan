@@ -9,11 +9,6 @@ import java.util.List;
 import java.util.Optional; // Required for this method
 
 @Repository
-public interface SocialAccountRepository extends JpaRepository<SocialAccount, String> {
-    // This method is used by the OAuthController to find existing accounts
-    Optional<SocialAccount> findByProviderAndProviderAccountId(String provider, String providerAccountId);
-    List<SocialAccount> findAllByStatus(SocialAccountStatus status);
-    List<SocialAccount> findAllByWorkspaceId(String workspaceId);
-    List<SocialAccount> findAllByWorkspaceIdAndStatus(String workspaceId, SocialAccountStatus status);
-    void deleteByWorkspaceId(String workspaceId);
+public interface SocialAccountRepository extends JpaRepository<SocialAccount, Long> {
+    List<SocialAccount> findAllByWorkspaceId(Long workspaceId);
 }

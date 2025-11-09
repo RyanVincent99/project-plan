@@ -1,6 +1,6 @@
 # 🚀 Project Plan - Content Scheduler
 
-A full-stack web application designed for social media content scheduling and collaboration, inspired by tools like Planable.io. This project features a Next.js frontend, a Spring Boot backend, and a PostgreSQL database, all containerized with Docker.
+A full-stack web application designed for social media content scheduling and collaboration, inspired by tools like Planable.io. This project features a Next.js frontend, a Spring Boot backend, a standalone authentication service, and two PostgreSQL databases, all containerized with Docker.
 
 ---
 
@@ -23,7 +23,7 @@ A full-stack web application designed for social media content scheduling and co
     *   Publishers and Administrators can approve or reject posts, ensuring content quality.
 
 *   **Channel Management:**
-    *   Connect social media accounts like LinkedIn and Discord via a secure OAuth2 flow.
+    *   Connect social media accounts like LinkedIn via a secure OAuth2 flow.
     *   View and manage all connected channels from a central settings page.
 
 *   **Multiple Content Views:**
@@ -32,8 +32,8 @@ A full-stack web application designed for social media content scheduling and co
     *   **Archive:** Keep your feed clean by archiving published posts.
 
 *   **Secure & Modern Stack:**
-    *   Secure user authentication and session management using Next-Auth with Google provider.
-    *   Decoupled architecture with a Next.js frontend and a Spring Boot backend API.
+    *   Secure user authentication and session management using a standalone Spring Boot authentication service.
+    *   Decoupled architecture with a Next.js frontend, a Spring Boot backend API, and a standalone authentication service.
     *   Fully containerized with Docker for easy setup and deployment.
 
 ---
@@ -42,10 +42,10 @@ A full-stack web application designed for social media content scheduling and co
 
 * **Frontend:** [Next.js](https://nextjs.org/) (React) & [Tailwind CSS](https://tailwindcss.com/)
 * **Backend:** [Spring Boot](https://spring.io/projects/spring-boot) (Java) & [Spring Data JPA](https://spring.io/projects/spring-data-jpa)
-* **Database:** [PostgreSQL](https://www.postgresql.org/)
-* **Authentication:** [Next-Auth](https://next-auth.js.org/)
+* **Authentication:** Standalone Spring Boot service with JWT
+* **Database:** [PostgreSQL](https://www.postgresql.org/) (x2)
 * **Containerization:** [Docker](https://www.docker.com/) & [Docker Compose](https://docs.docker.com/compose/)
-* **ORM:** [Prisma](https://www.prisma.io/) (for Next-Auth) & [Hibernate](https://hibernate.org/) (for Spring Boot)
+* **ORM:** [Hibernate](https://hibernate.org/) (for Spring Boot)
 
 ---
 
@@ -66,58 +66,54 @@ Follow these instructions to get the project up and running on your local machin
     cd project-plan
     ```
 
-2.  **Create the environment file:**
-    Create a new file named `.env` in the root of the project and paste the following content. You will need to fill in the credentials by following the steps in the next section.
+2.  **Create the environment files:**
 
-    ```.env
-    # Database Credentials
-    POSTGRES_USER=your_db_user
-    POSTGRES_PASSWORD=your_db_password
-    POSTGRES_DB=project_plan
-    DATABASE_URL="postgresql://your_db_user:your_db_password@db:5432/project_plan"
+    *   **Root `.env` file:**
+        Create a new file named `.env` in the root of the project and paste the following content:
 
-    # NextAuth
-    NEXTAUTH_SECRET="your_secret_key_here"
-    NEXTAUTH_URL="http://localhost:3000"
+        ```.env
+        # Database Credentials
+        POSTGRES_USER=your_db_user
+        POSTGRES_PASSWORD=your_db_password
+        POSTGRES_DB=project_plan
+        DATABASE_URL="postgresql://your_db_user:your_db_password@db:5432/project_plan"
+        ```
 
-    # Google Provider for NextAuth (User Login)
-    GOOGLE_CLIENT_ID="your-google-client-id"
-    GOOGLE_CLIENT_SECRET="your-google-client-secret"
+    *   **Standalone Auth System `.env` file:**
+        Create a new file named `.env` in the `Standalone-auth-system-main` directory and paste the following content:
 
-    # LinkedIn Provider for Backend (Content Publishing)
-    LINKEDIN_CLIENT_ID="your-linkedin-client-id"
-    LINKEDIN_CLIENT_SECRET="your-linkedin-client-secret"
+        ```.env
+        # Database Credentials
+        SPRING_DATASOURCE_URL=jdbc:postgresql://auth-db:5432/idp_db
+        SPRING_DATASOURCE_USERNAME=postgres
+        SPRING_DATASOURCE_PASSWORD=password
 
-    # Discord Provider for Backend (Content Publishing)
-    DISCORD_CLIENT_ID="your-discord-client-id"
-    DISCORD_CLIENT_SECRET="your-discord-client-secret"
-    ```
+        # Email Credentials
+        MAIL_USERNAME=your-email@gmail.com
+        MAIL_PASSWORD=your-email-password
+
+        # LinkedIn Provider for Backend (Content Publishing)
+        LINKEDIN_CLIENT_ID="your-linkedin-client-id"
+        LINKEDIN_CLIENT_SECRET="your-linkedin-client-secret"
+        LINKEDIN_REDIRECT_URI="http://localhost:8081/linkedin/callback"
+        LINKEDIN_TOKEN_URI="https://www.linkedin.com/oauth/v2/accessToken"
+        LINKEDIN_USER_INFO_URI="https://api.linkedin.com/v2/userinfo"
+
+        # Frontend URLs
+        FRONTEND_REDIRECT_URL=http://localhost:3000/dashboard
+        FRONTEND_LOGIN_WIDGET=http://localhost:3000/login
+        ```
 
 3.  **Set up OAuth Providers:**
 
-    #### Google (for User Login)
-    - Go to the [Google Cloud Console](https://console.cloud.google.com/).
-    - Create a new project and go to "APIs & Services" > "Credentials".
-    - Create an "OAuth client ID" for a "Web application".
-    - Add `http://localhost:3000` to "Authorized JavaScript origins".
-    - Add `http://localhost:3000/api/auth/callback/google` to "Authorized redirect URIs".
-    - Copy the Client ID and Client Secret into your `.env` file.
-
-    #### Discord (for Content Publishing)
-    1.  **Go to the Discord Developer Portal:** Navigate to [https://discord.com/developers/applications](https://discord.com/developers/applications) and log in.
-    2.  **Create a New Application:** Click "New Application" and give it a name.
-    3.  **Get Credentials:** Go to the "OAuth2" page to find your `CLIENT ID` and `CLIENT SECRET`. Copy these into your `.env` file.
-    4.  **Add Redirect URI:** On the "OAuth2" page, under "Redirects", add the URL: `http://localhost:8080/login/oauth2/code/discord`.
-    5.  **Save Changes.**
-
     #### LinkedIn (for Content Publishing)
     - Go to the [LinkedIn Developer Portal](https://www.linkedin.com/developers/apps).
-    - Create a new app and under the "Auth" tab, add the redirect URI: `http://localhost:8080/login/oauth2/code/linkedin`.
+    - Create a new app and under the "Auth" tab, add the redirect URI: `http://localhost:8081/linkedin/callback`.
     - Under "Products", request access to "Sign In with LinkedIn using OpenID Connect" and "Share on LinkedIn".
-    - Once approved, get your credentials from the "Auth" tab and add them to your `.env` file.
+    - Once approved, get your credentials from the "Auth" tab and add them to your `.env` file in the `Standalone-auth-system-main` directory.
 
 4.  **Build and Run the Application:**
-    Run the following command in your terminal. This will build the Docker images for the frontend and backend, and start all three containers.
+    Run the following command in your terminal. This will build the Docker images for the frontend, backend, and auth service, and start all containers.
 
     ```bash
     docker-compose up --build
@@ -133,13 +129,12 @@ Follow these instructions to get the project up and running on your local machin
 
 ```
 project-plan/
-├── backend/            # Spring Boot Backend Service
-├── components/         # React Components for the Frontend
-├── lib/                # Shared utility files (Prisma Client)
-├── pages/              # Next.js pages and API routes
-├── prisma/             # Prisma schema and migrations for auth
-├── styles/             # Global CSS and Tailwind styles
-├── docker-compose.yml  # Docker Compose configuration
-├── Dockerfile          # Dockerfile for the Next.js Frontend
+├── backend/                  # Spring Boot Backend Service
+├── Standalone-auth-system-main/ # Standalone Spring Boot Authentication Service
+├── components/               # React Components for the Frontend
+├── pages/                    # Next.js pages and API routes
+├── styles/                   # Global CSS and Tailwind styles
+├── docker-compose.yml        # Docker Compose configuration
+├── Dockerfile                # Dockerfile for the Next.js Frontend
 └── ...
 ```

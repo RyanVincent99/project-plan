@@ -37,18 +37,19 @@ public class SocialAccountController {
      */
     @GetMapping
     public ResponseEntity<List<SocialAccount>> getAllSocialAccounts(
-            @RequestParam String workspaceId,
+            @RequestParam Long workspaceId,
             @RequestParam(required = false) String status) {
-        List<SocialAccount> accounts;
+        List<SocialAccount> accounts = socialAccountRepository.findAll().stream()
+                .filter(account -> account.getWorkspace().getId().equals(workspaceId))
+                .toList();
+
         if (status != null) {
             try {
                 SocialAccountStatus statusEnum = SocialAccountStatus.valueOf(status.toUpperCase());
-                accounts = socialAccountRepository.findAllByWorkspaceIdAndStatus(workspaceId, statusEnum);
+                accounts = accounts.stream().filter(account -> account.getStatus() == statusEnum).toList();
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.badRequest().build();
             }
-        } else {
-            accounts = socialAccountRepository.findAllByWorkspaceId(workspaceId);
         }
         return ResponseEntity.ok(accounts);
     }
@@ -83,7 +84,7 @@ public class SocialAccountController {
      * @return A ResponseEntity containing the updated SocialAccount and an OK status.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<SocialAccount> updateSocialAccountName(@PathVariable String id, @RequestBody UpdateChannelRequest request) {
+    public ResponseEntity<SocialAccount> updateSocialAccountName(@PathVariable Long id, @RequestBody UpdateChannelRequest request) {
         SocialAccount account = socialAccountRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Social Account not found with id: " + id));
         account.setName(request.getName());
@@ -92,7 +93,7 @@ public class SocialAccountController {
     }
 
     @PutMapping("/{id}/disconnect")
-    public ResponseEntity<SocialAccount> disconnectSocialAccount(@PathVariable String id) {
+    public ResponseEntity<SocialAccount> disconnectSocialAccount(@PathVariable Long id) {
         SocialAccount account = socialAccountRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Social Account not found with id: " + id));
         
@@ -101,6 +102,19 @@ public class SocialAccountController {
         account.setAccessToken(null);
         account.setRefreshToken(null);
         account.setExpiresAt(null);
+
+        SocialAccount updatedAccount = socialAccountRepository.save(account);
+        return ResponseEntity.ok(updatedAccount);
+    }
+
+    @PostMapping("/{id}/connect")
+    public ResponseEntity<SocialAccount> connectSocialAccount(@PathVariable Long id, @RequestBody com.projectplan.scheduler.dto.ConnectSocialAccountRequest request) {
+        SocialAccount account = socialAccountRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Social Account not found with id: " + id));
+
+        account.setAccessToken(request.getAccessToken());
+        account.setRefreshToken(request.getRefreshToken());
+        account.setStatus(SocialAccountStatus.CONNECTED);
 
         SocialAccount updatedAccount = socialAccountRepository.save(account);
         return ResponseEntity.ok(updatedAccount);
@@ -115,7 +129,7 @@ public class SocialAccountController {
      */
     @DeleteMapping("/{id}")
     @Transactional
-    public ResponseEntity<Void> deleteSocialAccount(@PathVariable String id) {
+    public ResponseEntity<Void> deleteSocialAccount(@PathVariable Long id) {
         SocialAccount accountToDelete = socialAccountRepository.findById(id).orElse(null);
 
         if (accountToDelete == null) {

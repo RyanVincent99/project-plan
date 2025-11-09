@@ -11,8 +11,8 @@ import java.time.LocalDateTime;
 public class SocialAccount {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     private String provider; // e.g., "linkedin", "facebook"
     
