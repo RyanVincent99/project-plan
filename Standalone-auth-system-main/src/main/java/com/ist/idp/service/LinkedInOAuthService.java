@@ -2,6 +2,8 @@ package com.ist.idp.service;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +20,7 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class LinkedInOAuthService {
 
+    private static final Logger logger = LoggerFactory.getLogger(LinkedInOAuthService.class);
     private final RestTemplate restTemplate;
 
 
@@ -56,6 +59,7 @@ public class LinkedInOAuthService {
         String url = userInfoUri;
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
+        headers.set("LinkedIn-Version", "202511");
         HttpEntity<String> entity = new HttpEntity<>("", headers);
 
         return restTemplate.exchange(url, HttpMethod.GET, entity, LinkedInUserDetails.class).getBody();
@@ -66,24 +70,19 @@ public class LinkedInOAuthService {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-Restli-Protocol-Version", "2.0.0");
 
-        String requestBody = "{\"author\":\"urn:li:person:" + getLinkedInId(accessToken) + "\",\"lifecycleState\":\"PUBLISHED\",\"specificContent\":{\"com.linkedin.ugc.ShareContent\":{\"shareCommentary\":{\"text\":\"" + content + "\"},\"shareMediaCategory\":\"NONE\"}},\"visibility\":{\"com.linkedin.ugc.MemberNetworkVisibility\":\"PUBLIC\"}}";
+        LinkedInUserDetails userDetails = getUserDetails(accessToken);
+        String authorUrn = "urn:li:person:" + userDetails.sub();
+
+        String requestBody = "{\"author\":\"" + authorUrn + "\",\"lifecycleState\":\"PUBLISHED\",\"specificContent\":{\"com.linkedin.ugc.ShareContent\":{\"shareCommentary\":{\"text\":\"" + content + "\"},\"shareMediaCategory\":\"NONE\"}},\"visibility\":{\"com.linkedin.ugc.MemberNetworkVisibility\":\"PUBLIC\"}}";
+
+        logger.info("Request Body for publishPost: {}", requestBody);
 
         HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
 
         restTemplate.postForObject(url, entity, String.class);
     }
-
-    private String getLinkedInId(String accessToken) {
-        String url = "https://api.linkedin.com/v2/me";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
-        HttpEntity<String> entity = new HttpEntity<>("", headers);
-
-        return restTemplate.exchange(url, HttpMethod.GET, entity, LinkedInIdResponse.class).getBody().id();
-    }
-
-    private record LinkedInIdResponse(String id) {}
 
     private record LinkedInTokenResponse(
             @JsonProperty("access_token") String accessToken,

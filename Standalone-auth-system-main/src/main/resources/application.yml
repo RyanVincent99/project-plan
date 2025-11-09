@@ -43,7 +43,7 @@ linkedin:
   api:
     client-id: ${LINKEDIN_CLIENT_ID}
     client-secret: ${LINKEDIN_CLIENT_SECRET}
-    scope: openid profile email
+    scope: openid,profile,email,w_member_social
     redirect-uri: ${LINKEDIN_REDIRECT_URI}
     authorization-uri: https://www.linkedin.com/oauth/v2/authorization
     token-uri: https://www.linkedin.com/oauth/v2/accessToken
@@ -62,7 +62,7 @@ frontend:
 logging:
   level:
     org.springframework.security: DEBUG
-    org.springframework.web.client.RestTemplate: DEBUG
+    org.springframework.web.client.RestTemplate: TRACE
 
 server:
   port: 8080
