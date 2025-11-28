@@ -92,6 +92,10 @@ Follow these instructions to get the project up and running on your local machin
         MAIL_USERNAME=your-email@gmail.com
         MAIL_PASSWORD=your-email-password
 
+        # Google Provider for User Login
+        GOOGLE_CLIENT_ID="your-google-client-id"
+        GOOGLE_CLIENT_SECRET="your-google-client-secret"
+
         # LinkedIn Provider for Backend (Content Publishing)
         LINKEDIN_CLIENT_ID="your-linkedin-client-id"
         LINKEDIN_CLIENT_SECRET="your-linkedin-client-secret"
@@ -105,6 +109,14 @@ Follow these instructions to get the project up and running on your local machin
         ```
 
 3.  **Set up OAuth Providers:**
+
+    #### Google (for User Login)
+    - Go to the [Google Cloud Console](https://console.cloud.google.com/).
+    - Create a new project and go to "APIs & Services" > "Credentials".
+    - Create an "OAuth client ID" for a "Web application".
+    - Add `http://localhost:8081` to "Authorized JavaScript origins".
+    - Add `http://localhost:8081/login/oauth2/code/google` to "Authorized redirect URIs".
+    - Copy the Client ID and Client Secret into your `.env` file in the `Standalone-auth-system-main` directory.
 
     #### LinkedIn (for Content Publishing)
     - Go to the [LinkedIn Developer Portal](https://www.linkedin.com/developers/apps).
